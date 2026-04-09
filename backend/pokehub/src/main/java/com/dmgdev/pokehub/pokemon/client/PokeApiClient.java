@@ -39,5 +39,12 @@ public class PokeApiClient {
                 .retrieve()
                 .body(Map.class);
     }
-}
 
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getResourceByUrl(String url) {
+        return restClient.get()
+                .uri(url)
+                .retrieve()
+                .body(Map.class);
+    }
+}

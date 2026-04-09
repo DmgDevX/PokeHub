@@ -18,9 +18,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { getPokemonByName } from "../api/pokemonApi";
 import type { PokemonDetail } from "../types/pokemon";
 
-const formatPokemonName = (name: string) =>
-  name.charAt(0).toUpperCase() + name.slice(1).replace(/-/g, " ");
-
 const formatPokemonId = (id: number) => `#${String(id).padStart(3, "0")}`;
 
 const typeColors: Record<string, { bg: string; color: string }> = {
@@ -99,7 +96,11 @@ export default function PokemonDetailPage() {
         setLoading(true);
         setError("");
 
-        if (!name) return;
+        if (!name) {
+          setError("No se ha indicado ningún Pokémon.");
+          setLoading(false);
+          return;
+        }
 
         const data = await getPokemonByName(name);
         setPokemon(data);
@@ -150,6 +151,7 @@ export default function PokemonDetailPage() {
           >
             Volver
           </Button>
+
           <Alert severity="error">{error || "Pokémon no encontrado."}</Alert>
         </Box>
       </Container>
@@ -229,7 +231,7 @@ export default function PokemonDetailPage() {
                       mb: 2,
                     }}
                   >
-                    {formatPokemonName(pokemon.name)}
+                    {pokemon.name}
                   </Typography>
 
                   <Box
@@ -241,15 +243,15 @@ export default function PokemonDetailPage() {
                     }}
                   >
                     {pokemon.types.map((type) => {
-                      const typeStyle = typeColors[type] || {
+                      const typeStyle = typeColors[type.key] || {
                         bg: "#e5e7eb",
                         color: "#111827",
                       };
 
                       return (
                         <Chip
-                          key={type}
-                          label={type.toUpperCase()}
+                          key={type.key}
+                          label={type.name.toUpperCase()}
                           sx={{
                             fontWeight: 800,
                             backgroundColor: typeStyle.bg,
@@ -358,15 +360,15 @@ export default function PokemonDetailPage() {
                     }}
                   >
                     {pokemon.types.map((type) => {
-                      const typeStyle = typeColors[type] || {
+                      const typeStyle = typeColors[type.key] || {
                         bg: "#e5e7eb",
                         color: "#111827",
                       };
 
                       return (
                         <Chip
-                          key={type}
-                          label={type}
+                          key={type.key}
+                          label={type.name}
                           sx={{
                             fontWeight: 800,
                             backgroundColor: typeStyle.bg,

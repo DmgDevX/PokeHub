@@ -7,7 +7,7 @@ public record PokemonDetailResponse(
         String name,
         Integer height,
         Integer weight,
-        List<String> types,
+        List<PokemonTypeResponse> types,
         List<String> abilities,
         List<String> moves,
         String image

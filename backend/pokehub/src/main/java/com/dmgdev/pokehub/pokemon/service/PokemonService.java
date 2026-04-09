@@ -3,7 +3,9 @@ package com.dmgdev.pokehub.pokemon.service;
 import com.dmgdev.pokehub.pokemon.client.PokeApiClient;
 import com.dmgdev.pokehub.pokemon.dto.PokemonDetailResponse;
 import com.dmgdev.pokehub.pokemon.dto.PokemonListItemResponse;
+import com.dmgdev.pokehub.pokemon.dto.PokemonTypeResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -44,24 +46,42 @@ public class PokemonService {
         Map<String, Object> response = pokeApiClient.getPokemonByName(name);
 
         Integer id = (Integer) response.get("id");
-        String pokemonName = (String) response.get("name");
+        String pokemonName = capitalize((String) response.get("name"));
         Integer height = (Integer) response.get("height");
         Integer weight = (Integer) response.get("weight");
 
-        List<String> types = ((List<Map<String, Object>>) response.get("types")).stream()
+        List<PokemonTypeResponse> types = ((List<Map<String, Object>>) response.get("types")).stream()
                 .map(typeEntry -> (Map<String, Object>) typeEntry.get("type"))
-                .map(type -> (String) type.get("name"))
+                .map(type -> {
+                    String key = (String) type.get("name");
+                    String url = (String) type.get("url");
+                    String translated = getSpanishNameFromResource(url);
+                    return new PokemonTypeResponse(
+                            key,
+                            capitalize(translated != null ? translated : key)
+                    );
+                })
                 .toList();
 
         List<String> abilities = ((List<Map<String, Object>>) response.get("abilities")).stream()
                 .map(abilityEntry -> (Map<String, Object>) abilityEntry.get("ability"))
-                .map(ability -> (String) ability.get("name"))
+                .map(ability -> {
+                    String fallbackName = (String) ability.get("name");
+                    String url = (String) ability.get("url");
+                    String translated = getSpanishNameFromResource(url);
+                    return capitalize(translated != null ? translated : fallbackName);
+                })
                 .toList();
 
         List<String> moves = ((List<Map<String, Object>>) response.get("moves")).stream()
                 .limit(10)
                 .map(moveEntry -> (Map<String, Object>) moveEntry.get("move"))
-                .map(move -> (String) move.get("name"))
+                .map(move -> {
+                    String fallbackName = (String) move.get("name");
+                    String url = (String) move.get("url");
+                    String translated = getSpanishNameFromResource(url);
+                    return capitalize(translated != null ? translated : fallbackName);
+                })
                 .toList();
 
         return new PokemonDetailResponse(
@@ -106,5 +126,37 @@ public class PokemonService {
 
     private String getOfficialArtworkUrl(Integer id) {
         return "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/" + id + ".png";
+    }
+
+    @SuppressWarnings("unchecked")
+    @Cacheable(value = "pokemonTranslations", key = "#url")
+    public String getSpanishNameFromResource(String url) {
+        try {
+            Map<String, Object> response = pokeApiClient.getResourceByUrl(url);
+            List<Map<String, Object>> names = (List<Map<String, Object>>) response.get("names");
+
+            if (names == null) {
+                return null;
+            }
+
+            return names.stream()
+                    .filter(nameEntry -> {
+                        Map<String, Object> language = (Map<String, Object>) nameEntry.get("language");
+                        return "es".equals(language.get("name"));
+                    })
+                    .map(nameEntry -> (String) nameEntry.get("name"))
+                    .findFirst()
+                    .orElse(null);
+
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String capitalize(String text) {
+        if (text == null || text.isBlank()) {
+            return text;
+        }
+        return text.substring(0, 1).toUpperCase() + text.substring(1);
     }
 }
