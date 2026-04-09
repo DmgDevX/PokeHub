@@ -10,5 +10,6 @@ public record PokemonDetailResponse(
         List<PokemonTypeResponse> types,
         List<String> abilities,
         List<String> moves,
+        List<PokemonEvolutionResponse> evolutions,
         String image
 ) {}

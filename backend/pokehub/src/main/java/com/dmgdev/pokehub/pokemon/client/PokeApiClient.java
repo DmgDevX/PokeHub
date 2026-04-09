@@ -9,6 +9,7 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
+@SuppressWarnings("unchecked")
 public class PokeApiClient {
 
     private final RestClient restClient;
@@ -16,7 +17,6 @@ public class PokeApiClient {
     @Value("${pokeapi.base-url}")
     private String baseUrl;
 
-    @SuppressWarnings("unchecked")
     public Map<String, Object> getPokemonList(int limit, int offset) {
         return restClient.get()
                 .uri(baseUrl + "/pokemon?limit={limit}&offset={offset}", limit, offset)
@@ -24,7 +24,6 @@ public class PokeApiClient {
                 .body(Map.class);
     }
 
-    @SuppressWarnings("unchecked")
     public Map<String, Object> getPokemonByName(String name) {
         return restClient.get()
                 .uri(baseUrl + "/pokemon/{name}", name.toLowerCase())
@@ -32,7 +31,13 @@ public class PokeApiClient {
                 .body(Map.class);
     }
 
-    @SuppressWarnings("unchecked")
+    public Map<String, Object> getPokemonSpecies(String name) {
+        return restClient.get()
+                .uri(baseUrl + "/pokemon-species/{name}", name.toLowerCase())
+                .retrieve()
+                .body(Map.class);
+    }
+
     public Map<String, Object> getAllPokemonBasicList() {
         return restClient.get()
                 .uri(baseUrl + "/pokemon?limit=2000&offset=0")
@@ -40,7 +45,6 @@ public class PokeApiClient {
                 .body(Map.class);
     }
 
-    @SuppressWarnings("unchecked")
     public Map<String, Object> getResourceByUrl(String url) {
         return restClient.get()
                 .uri(url)

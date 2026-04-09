@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  Container,
   Paper,
   Typography,
 } from "@mui/material";
@@ -23,28 +22,19 @@ export default function PokemonListPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
 
-  const loadPokemon = async (
-    searchValue: string,
-    currentLimit: number,
-    append = false
-  ) => {
+  const loadPokemon = async (searchValue: string, currentLimit: number) => {
     try {
       const isSearching = searchValue.trim().length > 0;
 
-      if (append) {
-        setLoadingMore(true);
-      } else {
+      if (isSearching || currentLimit === 24) {
         setLoading(true);
+      } else {
+        setLoadingMore(true);
       }
 
       setError("");
 
-      const data = await getPokemonList(
-        isSearching ? currentLimit : currentLimit,
-        0,
-        searchValue
-      );
-
+      const data = await getPokemonList(currentLimit, 0, searchValue);
       setPokemonList(data);
     } catch {
       setError("No se pudieron cargar los Pokémon. Inténtalo de nuevo.");
@@ -56,8 +46,7 @@ export default function PokemonListPage() {
 
   useEffect(() => {
     if (search.trim()) return;
-
-    loadPokemon("", limit, limit > 24);
+    loadPokemon("", limit);
   }, [limit, search]);
 
   useEffect(() => {
@@ -76,6 +65,7 @@ export default function PokemonListPage() {
     <Box
       sx={{
         minHeight: "100vh",
+        width: "100%",
         background:
           "linear-gradient(180deg, #f8fafc 0%, #eef2ff 35%, #fff7ed 100%)",
         pb: 6,
@@ -90,9 +80,10 @@ export default function PokemonListPage() {
           color: "white",
           pt: { xs: 7, md: 10 },
           pb: { xs: 8, md: 10 },
+          px: { xs: 2, md: 3, xl: 5 },
         }}
       >
-        <Container maxWidth="lg">
+        <Box sx={{ width: "100%" }}>
           <Box sx={{ position: "relative", zIndex: 2 }}>
             <Box
               sx={{
@@ -136,7 +127,7 @@ export default function PokemonListPage() {
               <PokemonSearchBar value={search} onChange={setSearch} />
             </Box>
           </Box>
-        </Container>
+        </Box>
 
         <Box
           sx={{
@@ -162,118 +153,117 @@ export default function PokemonListPage() {
         />
       </Box>
 
-      <Container
-        maxWidth="lg"
+      <Box
         sx={{
           mt: { xs: -4, md: -5 },
           position: "relative",
           zIndex: 3,
+          px: { xs: 2, md: 3, xl: 5 },
         }}
       >
-        <Paper
-          elevation={0}
-          sx={{
-            backgroundColor: "rgba(255,255,255,0.92)",
-            backdropFilter: "blur(12px)",
-            borderRadius: 5,
-            p: { xs: 2.5, md: 4 },
-            boxShadow: "0 20px 50px rgba(0,0,0,0.08)",
-            border: "1px solid rgba(255,255,255,0.6)",
-          }}
-        >
-          <Box
+        <Box sx={{ width: "100%" }}>
+          <Paper
+            elevation={0}
             sx={{
-              display: "flex",
-              flexDirection: { xs: "column", md: "row" },
-              justifyContent: "space-between",
-              alignItems: { xs: "flex-start", md: "center" },
-              gap: 2,
-              mb: 3,
+              width: "100%",
+              backgroundColor: "rgba(255,255,255,0.92)",
+              backdropFilter: "blur(12px)",
+              borderRadius: 5,
+              p: { xs: 2.5, md: 4, xl: 5 },
+              boxShadow: "0 20px 50px rgba(0,0,0,0.08)",
+              border: "1px solid rgba(255,255,255,0.6)",
             }}
           >
-            <Box>
-              <Typography variant="h5" sx={{ fontWeight: 800, color: "#1f2937" }}>
-                Listado de Pokémon
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {pokemonList.length} Pokémon visibles
-              </Typography>
-            </Box>
-          </Box>
-
-          {loading ? (
             <Box
               sx={{
-                py: 10,
                 display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
+                flexDirection: { xs: "column", md: "row" },
+                justifyContent: "space-between",
+                alignItems: { xs: "flex-start", md: "center" },
                 gap: 2,
+                mb: 3,
               }}
             >
-              <CircularProgress />
-              <Typography color="text.secondary">Cargando Pokédex...</Typography>
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 900, color: "#1f2937" }}>
+                  Listado de Pokémon
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {pokemonList.length} Pokémon visibles
+                </Typography>
+              </Box>
             </Box>
-          ) : error ? (
-            <Alert severity="error">{error}</Alert>
-          ) : pokemonList.length === 0 ? (
-            <Alert severity="info">
-              No se han encontrado Pokémon con esa búsqueda.
-            </Alert>
-          ) : (
-            <>
+
+            {loading ? (
               <Box
                 sx={{
-                  display: "grid",
-                  gridTemplateColumns: {
-                    xs: "1fr",
-                    sm: "repeat(2, 1fr)",
-                    md: "repeat(3, 1fr)",
-                    lg: "repeat(4, 1fr)",
-                  },
-                  gap: 3,
+                  py: 10,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 2,
                 }}
               >
-                {pokemonList.map((pokemon) => (
-                  <Box key={pokemon.id}>
-                    <PokemonCard pokemon={pokemon} />
-                  </Box>
-                ))}
+                <CircularProgress />
+                <Typography color="text.secondary">Cargando Pokédex...</Typography>
               </Box>
-
-              {!search.trim() && (
+            ) : error ? (
+              <Alert severity="error">{error}</Alert>
+            ) : pokemonList.length === 0 ? (
+              <Alert severity="info">
+                No se han encontrado Pokémon con esa búsqueda.
+              </Alert>
+            ) : (
+              <>
                 <Box
                   sx={{
-                    mt: 5,
-                    display: "flex",
-                    justifyContent: "center",
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                    gap: { xs: 2, md: 3 },
+                    alignItems: "stretch",
                   }}
                 >
-                  <Button
-                    variant="contained"
-                    size="large"
-                    onClick={() => setLimit((prev) => prev + 24)}
-                    endIcon={<KeyboardArrowRightIcon />}
-                    disabled={loadingMore}
+                  {pokemonList.map((pokemon) => (
+                    <Box key={pokemon.id} sx={{ minWidth: 0 }}>
+                      <PokemonCard pokemon={pokemon} />
+                    </Box>
+                  ))}
+                </Box>
+
+                {!search.trim() && (
+                  <Box
                     sx={{
-                      borderRadius: "999px",
-                      px: 4,
-                      py: 1.4,
-                      fontWeight: 800,
-                      textTransform: "none",
-                      background: "linear-gradient(90deg, #3b4cca 0%, #5c6bc0 100%)",
-                      boxShadow: "0 10px 24px rgba(59,76,202,0.28)",
+                      mt: 5,
+                      display: "flex",
+                      justifyContent: "center",
                     }}
                   >
-                    {loadingMore ? "Cargando..." : "Cargar más Pokémon"}
-                  </Button>
-                </Box>
-              )}
-            </>
-          )}
-        </Paper>
-      </Container>
+                    <Button
+                      variant="contained"
+                      size="large"
+                      onClick={() => setLimit((prev) => prev + 24)}
+                      endIcon={<KeyboardArrowRightIcon />}
+                      disabled={loadingMore}
+                      sx={{
+                        borderRadius: "999px",
+                        px: 4,
+                        py: 1.4,
+                        fontWeight: 800,
+                        textTransform: "none",
+                        background: "linear-gradient(90deg, #3b4cca 0%, #5c6bc0 100%)",
+                        boxShadow: "0 10px 24px rgba(59,76,202,0.28)",
+                      }}
+                    >
+                      {loadingMore ? "Cargando..." : "Cargar más Pokémon"}
+                    </Button>
+                  </Box>
+                )}
+              </>
+            )}
+          </Paper>
+        </Box>
+      </Box>
     </Box>
   );
 }

@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
   Button,
   Chip,
   CircularProgress,
-  Container,
   Divider,
   Paper,
   Typography,
@@ -14,6 +13,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import BoltIcon from "@mui/icons-material/Bolt";
 import SportsMmaIcon from "@mui/icons-material/SportsMma";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
 import { useNavigate, useParams } from "react-router-dom";
 import { getPokemonByName } from "../api/pokemonApi";
 import type { PokemonDetail } from "../types/pokemon";
@@ -57,8 +57,8 @@ function DetailSection({
         p: 3,
         borderRadius: 4,
         border: "1px solid rgba(0,0,0,0.08)",
+        backgroundColor: "rgba(255,255,255,0.96)",
         height: "100%",
-        backgroundColor: "rgba(255,255,255,0.94)",
       }}
     >
       <Box
@@ -76,7 +76,6 @@ function DetailSection({
       </Box>
 
       <Divider sx={{ mb: 2 }} />
-
       {children}
     </Paper>
   );
@@ -98,7 +97,6 @@ export default function PokemonDetailPage() {
 
         if (!name) {
           setError("No se ha indicado ningún Pokémon.");
-          setLoading(false);
           return;
         }
 
@@ -113,6 +111,16 @@ export default function PokemonDetailPage() {
 
     loadPokemon();
   }, [name]);
+
+  const heightInMeters = useMemo(() => {
+    if (!pokemon) return "";
+    return `${(pokemon.height / 10).toFixed(1)} m`;
+  }, [pokemon]);
+
+  const weightInKg = useMemo(() => {
+    if (!pokemon) return "";
+    return `${(pokemon.weight / 10).toFixed(1)} kg`;
+  }, [pokemon]);
 
   if (loading) {
     return (
@@ -142,8 +150,8 @@ export default function PokemonDetailPage() {
 
   if (error || !pokemon) {
     return (
-      <Container sx={{ py: 6 }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box sx={{ px: 3, py: 6 }}>
+        <Box sx={{ maxWidth: "1200px", mx: "auto", display: "flex", flexDirection: "column", gap: 3 }}>
           <Button
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate("/")}
@@ -154,7 +162,7 @@ export default function PokemonDetailPage() {
 
           <Alert severity="error">{error || "Pokémon no encontrado."}</Alert>
         </Box>
-      </Container>
+      </Box>
     );
   }
 
@@ -165,9 +173,10 @@ export default function PokemonDetailPage() {
         background:
           "linear-gradient(180deg, #f8fafc 0%, #eef2ff 40%, #fff7ed 100%)",
         py: { xs: 3, md: 5 },
+        px: { xs: 2, md: 3, xl: 4 },
       }}
     >
-      <Container maxWidth="lg">
+      <Box sx={{ maxWidth: "1600px", mx: "auto" }}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           <Button
             startIcon={<ArrowBackIcon />}
@@ -197,20 +206,19 @@ export default function PokemonDetailPage() {
                 background:
                   "linear-gradient(135deg, #ef5350 0%, #d32f2f 45%, #3b4cca 100%)",
                 color: "white",
-                px: { xs: 3, md: 5 },
-                py: { xs: 4, md: 5 },
+                px: { xs: 3, md: 5, xl: 6 },
+                py: { xs: 4, md: 5, xl: 6 },
               }}
             >
               <Box
                 sx={{
-                  display: "flex",
-                  flexDirection: { xs: "column", md: "row" },
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", lg: "1.35fr 0.85fr" },
                   gap: 4,
                   alignItems: "center",
-                  justifyContent: "space-between",
                 }}
               >
-                <Box sx={{ flex: 1, width: "100%" }}>
+                <Box sx={{ minWidth: 0 }}>
                   <Typography
                     sx={{
                       fontWeight: 700,
@@ -223,10 +231,10 @@ export default function PokemonDetailPage() {
                   </Typography>
 
                   <Typography
-                    variant="h3"
+                    variant="h2"
                     sx={{
                       fontWeight: 900,
-                      fontSize: { xs: "2.2rem", md: "3rem" },
+                      fontSize: { xs: "2.2rem", md: "3rem", xl: "3.6rem" },
                       lineHeight: 1.05,
                       mb: 2,
                     }}
@@ -264,9 +272,10 @@ export default function PokemonDetailPage() {
 
                   <Box
                     sx={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: 4,
+                      display: "grid",
+                      gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, max-content)" },
+                      gap: 3,
+                      alignItems: "start",
                     }}
                   >
                     <Box>
@@ -274,7 +283,7 @@ export default function PokemonDetailPage() {
                         Altura
                       </Typography>
                       <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                        {pokemon.height}
+                        {heightInMeters}
                       </Typography>
                     </Box>
 
@@ -283,7 +292,25 @@ export default function PokemonDetailPage() {
                         Peso
                       </Typography>
                       <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                        {pokemon.weight}
+                        {weightInKg}
+                      </Typography>
+                    </Box>
+
+                    <Box>
+                      <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                        Habilidades
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                        {pokemon.abilities.length}
+                      </Typography>
+                    </Box>
+
+                    <Box>
+                      <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                        Movimientos
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                        {pokemon.moves.length}
                       </Typography>
                     </Box>
                   </Box>
@@ -292,7 +319,6 @@ export default function PokemonDetailPage() {
                 <Box
                   sx={{
                     width: "100%",
-                    maxWidth: 320,
                     display: "flex",
                     justifyContent: "center",
                   }}
@@ -303,21 +329,21 @@ export default function PokemonDetailPage() {
                     alt={pokemon.name}
                     sx={{
                       width: "100%",
-                      maxWidth: 260,
+                      maxWidth: { xs: 260, md: 320, xl: 380 },
                       height: "auto",
                       objectFit: "contain",
-                      filter: "drop-shadow(0 16px 24px rgba(0,0,0,0.26))",
+                      filter: "drop-shadow(0 18px 28px rgba(0,0,0,0.28))",
                     }}
                   />
                 </Box>
               </Box>
             </Box>
 
-            <Box sx={{ p: { xs: 2.5, md: 4 } }}>
+            <Box sx={{ p: { xs: 2.5, md: 4, xl: 5 } }}>
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                  gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" },
                   gap: 3,
                   mb: 3,
                 }}
@@ -381,6 +407,81 @@ export default function PokemonDetailPage() {
                 </DetailSection>
               </Box>
 
+              <Box sx={{ mb: 3 }}>
+                <DetailSection
+                  title="Línea evolutiva"
+                  icon={<AutorenewIcon sx={{ color: "#7c3aed" }} />}
+                >
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: {
+                        xs: "1fr",
+                        sm: "repeat(2, 1fr)",
+                        lg: "repeat(3, 1fr)",
+                        xl: "repeat(4, 1fr)",
+                      },
+                      gap: 2,
+                    }}
+                  >
+                    {pokemon.evolutions.map((evolution) => {
+                      const isCurrent = evolution.id === pokemon.id;
+
+                      return (
+                        <Paper
+                          key={evolution.id}
+                          onClick={() => navigate(`/pokemon/${evolution.name.toLowerCase()}`)}
+                          elevation={0}
+                          sx={{
+                            p: 2,
+                            borderRadius: 3,
+                            border: isCurrent
+                              ? "2px solid #ffcb05"
+                              : "1px solid rgba(0,0,0,0.08)",
+                            background: isCurrent
+                              ? "linear-gradient(180deg, #fff8dc 0%, #ffffff 100%)"
+                              : "#ffffff",
+                            cursor: "pointer",
+                            transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                            "&:hover": {
+                              transform: "translateY(-4px)",
+                              boxShadow: "0 10px 24px rgba(0,0,0,0.08)",
+                            },
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              textAlign: "center",
+                              gap: 1.2,
+                            }}
+                          >
+                            <Box
+                              component="img"
+                              src={evolution.image}
+                              alt={evolution.name}
+                              sx={{
+                                width: 110,
+                                height: 110,
+                                objectFit: "contain",
+                              }}
+                            />
+                            <Typography sx={{ fontWeight: 800 }}>
+                              {evolution.name}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {formatPokemonId(evolution.id)}
+                            </Typography>
+                          </Box>
+                        </Paper>
+                      );
+                    })}
+                  </Box>
+                </DetailSection>
+              </Box>
+
               <DetailSection
                 title="Movimientos"
                 icon={<SportsMmaIcon sx={{ color: "#ef4444" }} />}
@@ -390,6 +491,9 @@ export default function PokemonDetailPage() {
                     display: "flex",
                     flexWrap: "wrap",
                     gap: 1,
+                    maxHeight: { xs: "none", xl: 420 },
+                    overflow: "auto",
+                    pr: { xl: 1 },
                   }}
                 >
                   {pokemon.moves.map((move) => (
@@ -409,7 +513,7 @@ export default function PokemonDetailPage() {
             </Box>
           </Paper>
         </Box>
-      </Container>
+      </Box>
     </Box>
   );
 }

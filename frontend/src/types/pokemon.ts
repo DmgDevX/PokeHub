@@ -10,6 +10,12 @@ export interface PokemonType {
   name: string;
 }
 
+export interface PokemonEvolution {
+  id: number;
+  name: string;
+  image: string;
+}
+
 export interface PokemonDetail {
   id: number;
   name: string;
@@ -18,5 +24,6 @@ export interface PokemonDetail {
   types: PokemonType[];
   abilities: string[];
   moves: string[];
+  evolutions: PokemonEvolution[];
   image: string;
 }

@@ -2,30 +2,30 @@ package com.dmgdev.pokehub.pokemon.service;
 
 import com.dmgdev.pokehub.pokemon.client.PokeApiClient;
 import com.dmgdev.pokehub.pokemon.dto.PokemonDetailResponse;
+import com.dmgdev.pokehub.pokemon.dto.PokemonEvolutionResponse;
 import com.dmgdev.pokehub.pokemon.dto.PokemonListItemResponse;
 import com.dmgdev.pokehub.pokemon.dto.PokemonTypeResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("unchecked")
 public class PokemonService {
 
     private final PokeApiClient pokeApiClient;
 
-    @SuppressWarnings("unchecked")
     public List<PokemonListItemResponse> getPokemonList(int limit, int offset) {
         Map<String, Object> response = pokeApiClient.getPokemonList(limit, offset);
         List<Map<String, Object>> results = (List<Map<String, Object>>) response.get("results");
-
         return mapPokemonList(results);
     }
 
-    @SuppressWarnings("unchecked")
     public List<PokemonListItemResponse> searchPokemon(String search) {
         Map<String, Object> response = pokeApiClient.getAllPokemonBasicList();
         List<Map<String, Object>> results = (List<Map<String, Object>>) response.get("results");
@@ -41,7 +41,6 @@ public class PokemonService {
                 .toList();
     }
 
-    @SuppressWarnings("unchecked")
     public PokemonDetailResponse getPokemonByName(String name) {
         Map<String, Object> response = pokeApiClient.getPokemonByName(name);
 
@@ -74,7 +73,6 @@ public class PokemonService {
                 .toList();
 
         List<String> moves = ((List<Map<String, Object>>) response.get("moves")).stream()
-                .limit(10)
                 .map(moveEntry -> (Map<String, Object>) moveEntry.get("move"))
                 .map(move -> {
                     String fallbackName = (String) move.get("name");
@@ -84,6 +82,8 @@ public class PokemonService {
                 })
                 .toList();
 
+        List<PokemonEvolutionResponse> evolutions = getEvolutionLine(name);
+
         return new PokemonDetailResponse(
                 id,
                 pokemonName,
@@ -92,6 +92,7 @@ public class PokemonService {
                 types,
                 abilities,
                 moves,
+                evolutions,
                 getOfficialArtworkUrl(id)
         );
     }
@@ -102,6 +103,49 @@ public class PokemonService {
 
     public List<String> getPokemonAbilities(String name) {
         return getPokemonByName(name).abilities();
+    }
+
+    private List<PokemonEvolutionResponse> getEvolutionLine(String name) {
+        Map<String, Object> speciesResponse = pokeApiClient.getPokemonSpecies(name);
+        Map<String, Object> evolutionChain = (Map<String, Object>) speciesResponse.get("evolution_chain");
+
+        if (evolutionChain == null || evolutionChain.get("url") == null) {
+            return List.of();
+        }
+
+        String evolutionChainUrl = (String) evolutionChain.get("url");
+        Map<String, Object> evolutionResponse = pokeApiClient.getResourceByUrl(evolutionChainUrl);
+        Map<String, Object> chain = (Map<String, Object>) evolutionResponse.get("chain");
+
+        List<PokemonEvolutionResponse> evolutions = new ArrayList<>();
+        collectEvolutionChain(chain, evolutions);
+        return evolutions;
+    }
+
+    private void collectEvolutionChain(Map<String, Object> chainNode, List<PokemonEvolutionResponse> evolutions) {
+        if (chainNode == null) {
+            return;
+        }
+
+        Map<String, Object> species = (Map<String, Object>) chainNode.get("species");
+        if (species != null) {
+            String speciesName = (String) species.get("name");
+            String speciesUrl = (String) species.get("url");
+            Integer id = extractPokemonId(speciesUrl);
+
+            evolutions.add(new PokemonEvolutionResponse(
+                    id,
+                    capitalize(speciesName),
+                    getOfficialArtworkUrl(id)
+            ));
+        }
+
+        List<Map<String, Object>> evolvesTo = (List<Map<String, Object>>) chainNode.get("evolves_to");
+        if (evolvesTo != null) {
+            for (Map<String, Object> nextEvolution : evolvesTo) {
+                collectEvolutionChain(nextEvolution, evolutions);
+            }
+        }
     }
 
     private List<PokemonListItemResponse> mapPokemonList(List<Map<String, Object>> results) {
@@ -127,8 +171,7 @@ public class PokemonService {
     private String getOfficialArtworkUrl(Integer id) {
         return "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/" + id + ".png";
     }
-
-    @SuppressWarnings("unchecked")
+    
     @Cacheable(value = "pokemonTranslations", key = "#url")
     public String getSpanishNameFromResource(String url) {
         try {
