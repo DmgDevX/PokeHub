@@ -112,9 +112,9 @@ Aplicación SPA moderna:
 ## 🗺️ Roadmap
 
 ### Fase 1
-- [ ] Pokédex básica  
-- [ ] Integración con PokéAPI  
-- [ ] UI inicial  
+- [X] Pokédex básica  
+- [X] Integración con PokéAPI  
+- [X] UI inicial  
 
 ### Fase 2
 - [ ] Cartas TCG  
