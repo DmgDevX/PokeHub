@@ -1,0 +1,9 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: pokehub
+
+pokeapi:
+  base-url: https://pokeapi.co/api/v2
