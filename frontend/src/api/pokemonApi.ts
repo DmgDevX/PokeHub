@@ -4,7 +4,7 @@ const api = axios.create({
   baseURL: "http://localhost:8080/api",
 });
 
-export const getPokemonList = async (limit = 24, offset = 0, search = "") => {
+export const getPokemonList = async (limit = 27, offset = 0, search = "") => {
   const params = new URLSearchParams();
 
   params.append("limit", String(limit));
