@@ -1,10 +1,11 @@
-package com.dmgdev.pokehub.pokemon.controller;
+package com.dmgdev.pokeapi.pokemon.controller;
 
-import com.dmgdev.pokehub.pokemon.dto.PokemonDetailResponse;
-import com.dmgdev.pokehub.pokemon.dto.PokemonListItemResponse;
-import com.dmgdev.pokehub.pokemon.service.PokemonService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import com.dmgdev.pokeapi.pokemon.dto.PokemonDetailResponse;
+import com.dmgdev.pokeapi.pokemon.dto.PokemonListItemResponse;
+import com.dmgdev.pokeapi.pokemon.service.PokemonService;
 
 import java.util.List;
 

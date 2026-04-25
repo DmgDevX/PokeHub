@@ -1,4 +1,4 @@
-package com.dmgdev.pokehub.pokemon.dto;
+package com.dmgdev.pokeapi.pokemon.dto;
 
 public record PokemonTypeResponse(
         String key,

@@ -1,4 +1,4 @@
-package com.dmgdev.pokehub.pokemon.client;
+package com.dmgdev.pokeapi.pokemon.client;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

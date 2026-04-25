@@ -1,13 +1,14 @@
-package com.dmgdev.pokehub.pokemon.service;
+package com.dmgdev.pokeapi.pokemon.service;
 
-import com.dmgdev.pokehub.pokemon.client.PokeApiClient;
-import com.dmgdev.pokehub.pokemon.dto.PokemonDetailResponse;
-import com.dmgdev.pokehub.pokemon.dto.PokemonEvolutionResponse;
-import com.dmgdev.pokehub.pokemon.dto.PokemonListItemResponse;
-import com.dmgdev.pokehub.pokemon.dto.PokemonTypeResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+
+import com.dmgdev.pokeapi.pokemon.client.PokeApiClient;
+import com.dmgdev.pokeapi.pokemon.dto.PokemonDetailResponse;
+import com.dmgdev.pokeapi.pokemon.dto.PokemonEvolutionResponse;
+import com.dmgdev.pokeapi.pokemon.dto.PokemonListItemResponse;
+import com.dmgdev.pokeapi.pokemon.dto.PokemonTypeResponse;
 
 import java.util.ArrayList;
 import java.util.List;
