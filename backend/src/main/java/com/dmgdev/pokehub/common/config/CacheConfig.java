@@ -10,6 +10,11 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager() {
-        return new ConcurrentMapCacheManager("pokemonTranslations");
+        return new ConcurrentMapCacheManager(
+                "pokemonTranslations",
+                "tcgCards",
+                "tcgCategories",
+                "tcgRarities"
+        );
     }
 }

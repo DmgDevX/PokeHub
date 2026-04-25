@@ -8,6 +8,7 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
+import StyleIcon from "@mui/icons-material/Style";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import BoltIcon from "@mui/icons-material/Bolt";
@@ -298,7 +299,45 @@ export default function PokemonDetailPage() {
                             {pokemon.abilities.length}
                           </Typography>
                         </Box>
+                        <Box sx={{ mb: 3 }}>
+                          <DetailSection
+                            title="Cartas TCG relacionadas"
+                            icon={<StyleIcon sx={{ color: "#3b4cca" }} />}
+                          >
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexDirection: { xs: "column", sm: "row" },
+                                justifyContent: "space-between",
+                                alignItems: { xs: "flex-start", sm: "center" },
+                                gap: 2,
+                              }}
+                            >
+                              <Box>
+                                <Typography sx={{ fontWeight: 700, color: "#1f2937" }}>
+                                  Explora cartas de {pokemon.name}
+                                </Typography>
 
+                                <Typography variant="body2" color="text.secondary">
+                                  Accede al catálogo TCG filtrado por este Pokémon.
+                                </Typography>
+                              </Box>
+
+                              <Button
+                                variant="contained"
+                                startIcon={<StyleIcon />}
+                                onClick={() => navigate(`/tcg/cards?pokemon=${pokemon.name.toLowerCase()}`)}
+                                sx={{
+                                  fontWeight: 800,
+                                  background: "linear-gradient(90deg, #3b4cca 0%, #5c6bc0 100%)",
+                                  boxShadow: "0 10px 24px rgba(59,76,202,0.28)",
+                                }}
+                              >
+                                Ver cartas
+                              </Button>
+                            </Box>
+                          </DetailSection>
+                        </Box>
                         <Box>
                           <Typography variant="body2" sx={{ opacity: 0.8 }}>
                             Movimientos
