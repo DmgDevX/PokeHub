@@ -1,4 +1,4 @@
-package com.dmgdev.pokehub;
+package com.dmgdev.pokeapi;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
