@@ -1,8 +1,4 @@
-<<<<<<<< HEAD:backend/pokehub/src/main/java/com/dmgdev/pokehub/pokeapi/client/PokeApiClient.java
 package com.dmgdev.pokehub.pokeapi.client;
-========
-package com.dmgdev.pokeapi.pokemon.client;
->>>>>>>> 603e74f3a7d05631e141d5394c63ee73b954b46e:backend/pokehub/src/main/java/com/dmgdev/pokeapi/pokemon/client/PokeApiClient.java
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

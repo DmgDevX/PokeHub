@@ -1,21 +1,11 @@
-<<<<<<<< HEAD:backend/pokehub/src/main/java/com/dmgdev/pokehub/pokeapi/controller/PokemonController.java
 package com.dmgdev.pokehub.pokeapi.controller;
-========
-package com.dmgdev.pokeapi.pokemon.controller;
->>>>>>>> 603e74f3a7d05631e141d5394c63ee73b954b46e:backend/pokehub/src/main/java/com/dmgdev/pokeapi/pokemon/controller/PokemonController.java
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-<<<<<<<< HEAD:backend/pokehub/src/main/java/com/dmgdev/pokehub/pokeapi/controller/PokemonController.java
 import com.dmgdev.pokehub.pokeapi.dto.PokemonDetailResponse;
 import com.dmgdev.pokehub.pokeapi.dto.PokemonListItemResponse;
 import com.dmgdev.pokehub.pokeapi.service.PokemonService;
-========
-import com.dmgdev.pokeapi.pokemon.dto.PokemonDetailResponse;
-import com.dmgdev.pokeapi.pokemon.dto.PokemonListItemResponse;
-import com.dmgdev.pokeapi.pokemon.service.PokemonService;
->>>>>>>> 603e74f3a7d05631e141d5394c63ee73b954b46e:backend/pokehub/src/main/java/com/dmgdev/pokeapi/pokemon/controller/PokemonController.java
 
 import java.util.List;
 

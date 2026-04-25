@@ -1,4 +1,4 @@
-package com.dmgdev.pokeapi.common.config;
+package com.dmgdev.pokehub.common.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

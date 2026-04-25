@@ -1,26 +1,14 @@
-<<<<<<<< HEAD:backend/pokehub/src/main/java/com/dmgdev/pokehub/pokeapi/service/PokemonService.java
 package com.dmgdev.pokehub.pokeapi.service;
-========
-package com.dmgdev.pokeapi.pokemon.service;
->>>>>>>> 603e74f3a7d05631e141d5394c63ee73b954b46e:backend/pokehub/src/main/java/com/dmgdev/pokeapi/pokemon/service/PokemonService.java
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-<<<<<<<< HEAD:backend/pokehub/src/main/java/com/dmgdev/pokehub/pokeapi/service/PokemonService.java
 import com.dmgdev.pokehub.pokeapi.client.PokeApiClient;
 import com.dmgdev.pokehub.pokeapi.dto.PokemonDetailResponse;
 import com.dmgdev.pokehub.pokeapi.dto.PokemonEvolutionResponse;
 import com.dmgdev.pokehub.pokeapi.dto.PokemonListItemResponse;
 import com.dmgdev.pokehub.pokeapi.dto.PokemonTypeResponse;
-========
-import com.dmgdev.pokeapi.pokemon.client.PokeApiClient;
-import com.dmgdev.pokeapi.pokemon.dto.PokemonDetailResponse;
-import com.dmgdev.pokeapi.pokemon.dto.PokemonEvolutionResponse;
-import com.dmgdev.pokeapi.pokemon.dto.PokemonListItemResponse;
-import com.dmgdev.pokeapi.pokemon.dto.PokemonTypeResponse;
->>>>>>>> 603e74f3a7d05631e141d5394c63ee73b954b46e:backend/pokehub/src/main/java/com/dmgdev/pokeapi/pokemon/service/PokemonService.java
 
 import java.util.ArrayList;
 import java.util.List;
