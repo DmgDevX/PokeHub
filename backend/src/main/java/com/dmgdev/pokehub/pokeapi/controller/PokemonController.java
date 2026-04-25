@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.dmgdev.pokehub.pokeapi.dto.PokemonDetailResponse;
 import com.dmgdev.pokehub.pokeapi.dto.PokemonListItemResponse;
+import com.dmgdev.pokehub.pokeapi.dto.PokemonMoveResponse;
 import com.dmgdev.pokehub.pokeapi.service.PokemonService;
 
 import java.util.List;
@@ -36,7 +37,7 @@ public class PokemonController {
     }
 
     @GetMapping("/{name}/moves")
-    public List<String> getPokemonMoves(@PathVariable String name) {
+    public List<PokemonMoveResponse> getPokemonMoves(@PathVariable String name) {
         return pokemonService.getPokemonMoves(name);
     }
 
