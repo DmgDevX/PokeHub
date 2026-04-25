@@ -16,8 +16,11 @@ import SportsMmaIcon from "@mui/icons-material/SportsMma";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import { useNavigate, useParams } from "react-router-dom";
 import { getPokemonByName } from "../api/pokemonApi";
+import { getTcgCards } from "../api/tcgApi";
 import PokemonLoadingModal from "../components/PokemonLoadingModal";
+import TcgCard from "../components/TcgCard";
 import type { PokemonDetail } from "../types/pokemon";
+import type { TcgCard as TcgCardType } from "../types/tcg";
 
 const formatPokemonId = (id: number) => `#${String(id).padStart(3, "0")}`;
 
@@ -128,6 +131,8 @@ export default function PokemonDetailPage() {
   const navigate = useNavigate();
 
   const [pokemon, setPokemon] = useState<PokemonDetail | null>(null);
+  const [relatedCards, setRelatedCards] = useState<TcgCardType[]>([]);
+  const [loadingRelatedCards, setLoadingRelatedCards] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -154,6 +159,29 @@ export default function PokemonDetailPage() {
     loadPokemon();
   }, [name]);
 
+  useEffect(() => {
+    const loadRelatedCards = async () => {
+      if (!pokemon?.name) return;
+
+      try {
+        setLoadingRelatedCards(true);
+
+        const data = await getTcgCards({
+          search: pokemon.name,
+          page: 0,
+        });
+
+        setRelatedCards(data.cards.slice(0, 4));
+      } catch {
+        setRelatedCards([]);
+      } finally {
+        setLoadingRelatedCards(false);
+      }
+    };
+
+    loadRelatedCards();
+  }, [pokemon?.name]);
+
   const heightInMeters = useMemo(() => {
     if (!pokemon) return "";
     return `${(pokemon.height / 10).toFixed(1)} m`;
@@ -162,6 +190,22 @@ export default function PokemonDetailPage() {
   const weightInKg = useMemo(() => {
     if (!pokemon) return "";
     return `${(pokemon.weight / 10).toFixed(1)} kg`;
+  }, [pokemon]);
+
+  const levelAndEggMoves = useMemo(() => {
+    if (!pokemon) return [];
+
+    return pokemon.moves.filter(
+      (move) => move.learnMethod === "level-up" || move.learnMethod === "egg"
+    );
+  }, [pokemon]);
+
+  const machineAndTutorMoves = useMemo(() => {
+    if (!pokemon) return [];
+
+    return pokemon.moves.filter(
+      (move) => move.learnMethod === "machine" || move.learnMethod === "tutor"
+    );
   }, [pokemon]);
 
   return (
@@ -366,10 +410,11 @@ export default function PokemonDetailPage() {
                       <Box
                         sx={{
                           display: "flex",
-                          flexDirection: { xs: "column", sm: "row" },
+                          flexDirection: { xs: "column", md: "row" },
                           justifyContent: "space-between",
-                          alignItems: { xs: "flex-start", sm: "center" },
+                          alignItems: { xs: "flex-start", md: "center" },
                           gap: 2,
+                          mb: relatedCards.length > 0 ? 3 : 0,
                         }}
                       >
                         <Box>
@@ -378,7 +423,7 @@ export default function PokemonDetailPage() {
                           </Typography>
 
                           <Typography variant="body2" color="text.secondary">
-                            Accede al catálogo TCG filtrado por este Pokémon.
+                            Vista previa del catálogo TCG relacionado con este Pokémon.
                           </Typography>
                         </Box>
 
@@ -396,9 +441,35 @@ export default function PokemonDetailPage() {
                             boxShadow: "0 10px 24px rgba(59,76,202,0.28)",
                           }}
                         >
-                          Ver cartas
+                          Ver todas
                         </Button>
                       </Box>
+
+                      {loadingRelatedCards ? (
+                        <Typography variant="body2" color="text.secondary">
+                          Cargando cartas relacionadas...
+                        </Typography>
+                      ) : relatedCards.length > 0 ? (
+                        <Box
+                          sx={{
+                            display: "grid",
+                            gridTemplateColumns: {
+                              xs: "1fr",
+                              sm: "repeat(2, 1fr)",
+                              lg: "repeat(4, 1fr)",
+                            },
+                            gap: 2,
+                          }}
+                        >
+                          {relatedCards.map((card) => (
+                            <TcgCard key={card.id} card={card} />
+                          ))}
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          No se han encontrado cartas relacionadas.
+                        </Typography>
+                      )}
                     </DetailSection>
                   </Box>
 
@@ -534,6 +605,7 @@ export default function PokemonDetailPage() {
                       </Box>
                     </DetailSection>
                   </Box>
+
                   <DetailSection
                     title="Movimientos"
                     icon={<SportsMmaIcon sx={{ color: "#ef4444" }} />}
@@ -571,70 +643,65 @@ export default function PokemonDetailPage() {
                             </Box>
 
                             <Box component="tbody">
-                              {pokemon.moves
-                                .filter(
-                                  (move) =>
-                                    move.learnMethod === "level-up" ||
-                                    move.learnMethod === "egg"
-                                )
-                                .map((move, index) => (
-                                  <Box
-                                    component="tr"
-                                    key={`${move.name}-${move.learnMethod}-${index}`}
-                                    sx={{
-                                      backgroundColor: index % 2 === 0 ? "#ffffff" : "#f8fafc",
-                                      "&:hover": {
-                                        backgroundColor: "#eef2ff",
-                                      },
-                                    }}
-                                  >
-                                    <Box component="td" sx={tdStyle}>
-                                      <Chip
-                                        label={
-                                          move.learnMethod === "egg"
-                                            ? "-"
-                                            : move.levelLearnedAt ?? "-"
-                                        }
-                                        size="small"
-                                        sx={{
-                                          minWidth: 48,
-                                          fontWeight: 900,
-                                          backgroundColor:
-                                            move.learnMethod === "level-up"
-                                              ? "#dcfce7"
-                                              : "#fef3c7",
-                                          color:
-                                            move.learnMethod === "level-up"
-                                              ? "#166534"
-                                              : "#92400e",
-                                        }}
-                                      />
-                                    </Box>
-
-                                    <Box component="td" sx={{ ...tdStyle, fontWeight: 800 }}>
-                                      {move.name}
-                                    </Box>
-
-                                    <Box component="td" sx={tdStyle}>
-                                      <Chip
-                                        label={formatMethod(move.learnMethod)}
-                                        size="small"
-                                        sx={{
-                                          fontWeight: 800,
-                                          borderRadius: "999px",
-                                          backgroundColor:
-                                            move.learnMethod === "level-up"
-                                              ? "#dcfce7"
-                                              : "#fef3c7",
-                                          color:
-                                            move.learnMethod === "level-up"
-                                              ? "#166534"
-                                              : "#92400e",
-                                        }}
-                                      />
-                                    </Box>
+                              {levelAndEggMoves.map((move, index) => (
+                                <Box
+                                  component="tr"
+                                  key={`${move.name}-${move.learnMethod}-${index}`}
+                                  sx={{
+                                    backgroundColor:
+                                      index % 2 === 0 ? "#ffffff" : "#f8fafc",
+                                    "&:hover": {
+                                      backgroundColor: "#eef2ff",
+                                    },
+                                  }}
+                                >
+                                  <Box component="td" sx={tdStyle}>
+                                    <Chip
+                                      label={
+                                        move.learnMethod === "egg"
+                                          ? "-"
+                                          : move.levelLearnedAt ?? "-"
+                                      }
+                                      size="small"
+                                      sx={{
+                                        minWidth: 48,
+                                        fontWeight: 900,
+                                        backgroundColor:
+                                          move.learnMethod === "level-up"
+                                            ? "#dcfce7"
+                                            : "#fef3c7",
+                                        color:
+                                          move.learnMethod === "level-up"
+                                            ? "#166534"
+                                            : "#92400e",
+                                      }}
+                                    />
                                   </Box>
-                                ))}
+
+                                  <Box component="td" sx={{ ...tdStyle, fontWeight: 800 }}>
+                                    {move.name}
+                                  </Box>
+
+                                  <Box component="td" sx={tdStyle}>
+                                    <Chip
+                                      label={formatMethod(move.learnMethod)}
+                                      size="small"
+                                      sx={{
+                                        fontWeight: 800,
+                                        borderRadius: "999px",
+                                        backgroundColor:
+                                          move.learnMethod === "level-up"
+                                            ? "#dcfce7"
+                                            : "#fef3c7",
+                                        color:
+                                          move.learnMethod === "level-up"
+                                            ? "#166534"
+                                            : "#92400e",
+                                      }}
+                                    />
+                                  </Box>
+                                </Box>
+                              ))}
                             </Box>
                           </Box>
                         </Box>
@@ -669,47 +736,42 @@ export default function PokemonDetailPage() {
                             </Box>
 
                             <Box component="tbody">
-                              {pokemon.moves
-                                .filter(
-                                  (move) =>
-                                    move.learnMethod === "machine" ||
-                                    move.learnMethod === "tutor"
-                                )
-                                .map((move, index) => (
-                                  <Box
-                                    component="tr"
-                                    key={`${move.name}-${move.learnMethod}-${index}`}
-                                    sx={{
-                                      backgroundColor: index % 2 === 0 ? "#ffffff" : "#f8fafc",
-                                      "&:hover": {
-                                        backgroundColor: "#eef2ff",
-                                      },
-                                    }}
-                                  >
-                                    <Box component="td" sx={{ ...tdStyle, fontWeight: 800 }}>
-                                      {move.name}
-                                    </Box>
-
-                                    <Box component="td" sx={tdStyle}>
-                                      <Chip
-                                        label={formatMethod(move.learnMethod)}
-                                        size="small"
-                                        sx={{
-                                          fontWeight: 800,
-                                          borderRadius: "999px",
-                                          backgroundColor:
-                                            move.learnMethod === "machine"
-                                              ? "#dbeafe"
-                                              : "#ede9fe",
-                                          color:
-                                            move.learnMethod === "machine"
-                                              ? "#1e40af"
-                                              : "#5b21b6",
-                                        }}
-                                      />
-                                    </Box>
+                              {machineAndTutorMoves.map((move, index) => (
+                                <Box
+                                  component="tr"
+                                  key={`${move.name}-${move.learnMethod}-${index}`}
+                                  sx={{
+                                    backgroundColor:
+                                      index % 2 === 0 ? "#ffffff" : "#f8fafc",
+                                    "&:hover": {
+                                      backgroundColor: "#eef2ff",
+                                    },
+                                  }}
+                                >
+                                  <Box component="td" sx={{ ...tdStyle, fontWeight: 800 }}>
+                                    {move.name}
                                   </Box>
-                                ))}
+
+                                  <Box component="td" sx={tdStyle}>
+                                    <Chip
+                                      label={formatMethod(move.learnMethod)}
+                                      size="small"
+                                      sx={{
+                                        fontWeight: 800,
+                                        borderRadius: "999px",
+                                        backgroundColor:
+                                          move.learnMethod === "machine"
+                                            ? "#dbeafe"
+                                            : "#ede9fe",
+                                        color:
+                                          move.learnMethod === "machine"
+                                            ? "#1e40af"
+                                            : "#5b21b6",
+                                      }}
+                                    />
+                                  </Box>
+                                </Box>
+                              ))}
                             </Box>
                           </Box>
                         </Box>

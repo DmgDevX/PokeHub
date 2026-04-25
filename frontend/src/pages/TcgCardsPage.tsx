@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Alert, Box, Button, Paper, Typography } from "@mui/material";
+import { useEffect, useRef, useState } from "react";
+import { Alert, Box, Chip, Paper, Typography } from "@mui/material";
 import StyleIcon from "@mui/icons-material/Style";
 import { useSearchParams } from "react-router-dom";
 
@@ -20,34 +20,29 @@ export default function TcgCardsPage() {
   const pokemonParam = searchParams.get("pokemon") || "";
 
   const [cards, setCards] = useState<TcgCardType[]>([]);
-
   const [search, setSearch] = useState(pokemonParam);
   const [rarity, setRarity] = useState("");
   const [category, setCategory] = useState("");
-
   const [rarities, setRarities] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
-
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
-
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
 
-  // 🔁 Sync con query param (?pokemon=...)
+  const loaderRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     setSearch(pokemonParam);
   }, [pokemonParam]);
 
-  // 🔁 Reset al cambiar filtros
   useEffect(() => {
     setCards([]);
     setPage(0);
     setHasMore(false);
   }, [search, rarity, category]);
 
-  // 📥 Cargar filtros dinámicos
   useEffect(() => {
     const loadFilters = async () => {
       try {
@@ -66,16 +61,14 @@ export default function TcgCardsPage() {
     loadFilters();
   }, []);
 
-  // 📥 Carga de cartas (paginada)
   useEffect(() => {
     const timeout = setTimeout(async () => {
       try {
         if (page === 0) {
-          setLoading(true);
+            setLoading(true);
         } else {
-          setLoadingMore(true);
+            setLoadingMore(true);
         }
-
         setError("");
 
         const data = await getTcgCards({
@@ -101,12 +94,35 @@ export default function TcgCardsPage() {
     return () => clearTimeout(timeout);
   }, [search, rarity, category, page]);
 
+  useEffect(() => {
+    if (!hasMore || loading || loadingMore) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setPage((prev) => prev + 1);
+        }
+      },
+      { rootMargin: "350px" }
+    );
+
+    const node = loaderRef.current;
+    if (node) observer.observe(node);
+
+    return () => {
+      if (node) observer.unobserve(node);
+    };
+  }, [hasMore, loading, loadingMore]);
+
+  const removeSearch = () => setSearch("");
+  const removeRarity = () => setRarity("");
+  const removeCategory = () => setCategory("");
+
+  const hasActiveFilters = search.trim() || rarity || category;
+
   return (
     <>
-      <PokemonLoadingModal
-        open={loading}
-        message="Cargando cartas TCG..."
-      />
+      <PokemonLoadingModal open={loading} message="Cargando cartas TCG..." />
 
       <Box
         sx={{
@@ -116,7 +132,6 @@ export default function TcgCardsPage() {
           pb: 6,
         }}
       >
-        {/* HEADER */}
         <Box
           sx={{
             background:
@@ -154,7 +169,6 @@ export default function TcgCardsPage() {
           </Typography>
         </Box>
 
-        {/* CONTENT */}
         <Box
           sx={{
             mt: { xs: -4, md: -5 },
@@ -164,7 +178,6 @@ export default function TcgCardsPage() {
           }}
         >
           <Box sx={{ maxWidth: "1600px", mx: "auto" }}>
-            {/* FILTROS */}
             <TcgFilters
               search={search}
               rarity={rarity}
@@ -175,6 +188,46 @@ export default function TcgCardsPage() {
               onRarityChange={setRarity}
               onCategoryChange={setCategory}
             />
+
+            {hasActiveFilters && (
+              <Box
+                sx={{
+                  mt: 2,
+                  display: "flex",
+                  gap: 1,
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 800 }}>
+                  Filtros activos:
+                </Typography>
+
+                {search.trim() && (
+                  <Chip
+                    label={`Búsqueda: ${search}`}
+                    onDelete={removeSearch}
+                    sx={{ fontWeight: 700 }}
+                  />
+                )}
+
+                {rarity && (
+                  <Chip
+                    label={`Rareza: ${rarity}`}
+                    onDelete={removeRarity}
+                    sx={{ fontWeight: 700 }}
+                  />
+                )}
+
+                {category && (
+                  <Chip
+                    label={`Categoría: ${category}`}
+                    onDelete={removeCategory}
+                    sx={{ fontWeight: 700 }}
+                  />
+                )}
+              </Box>
+            )}
 
             <Paper
               elevation={0}
@@ -200,7 +253,6 @@ export default function TcgCardsPage() {
                 <Alert severity="info">No se han encontrado cartas.</Alert>
               ) : (
                 <>
-                  {/* GRID */}
                   <Box
                     sx={{
                       display: "grid",
@@ -214,35 +266,20 @@ export default function TcgCardsPage() {
                     ))}
                   </Box>
 
-                  {/* PAGINACIÓN */}
-                  {hasMore && !loading && (
+                  {hasMore && (
                     <Box
+                      ref={loaderRef}
                       sx={{
+                        height: 90,
                         display: "flex",
+                        alignItems: "center",
                         justifyContent: "center",
-                        mt: 4,
+                        mt: 3,
                       }}
                     >
-                      <Button
-                        variant="contained"
-                        disabled={loadingMore}
-                        onClick={() => setPage((prev) => prev + 1)}
-                        sx={{
-                          fontWeight: 900,
-                          borderRadius: "999px",
-                          px: 4,
-                          py: 1.2,
-                          background:
-                            "linear-gradient(90deg, #ef5350 0%, #3b4cca 100%)",
-                          boxShadow: "0 10px 24px rgba(59,76,202,0.28)",
-                          "&:disabled": {
-                            color: "white",
-                            opacity: 0.75,
-                          },
-                        }}
-                      >
-                        {loadingMore ? "Cargando más..." : "Mostrar más"}
-                      </Button>
+                      <Typography variant="body2" color="text.secondary">
+                        {loadingMore ? "Cargando más cartas..." : "Desliza para cargar más"}
+                      </Typography>
                     </Box>
                   )}
                 </>
