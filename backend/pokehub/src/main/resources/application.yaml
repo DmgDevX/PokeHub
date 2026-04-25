@@ -7,3 +7,6 @@ spring:
 
 pokeapi:
   base-url: https://pokeapi.co/api/v2
+
+tcgdex:
+  base-url: https://api.tcgdex.net/v2/es

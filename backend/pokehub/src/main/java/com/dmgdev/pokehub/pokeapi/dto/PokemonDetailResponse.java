@@ -1,4 +1,4 @@
-package com.dmgdev.pokehub.pokemon.dto;
+package com.dmgdev.pokehub.pokeapi.dto;
 
 import java.util.List;
 
