@@ -117,8 +117,8 @@ Aplicación SPA moderna:
 - [X] UI inicial  
 
 ### Fase 2
-- [ ] Cartas TCG  
-- [ ] Filtros y búsqueda avanzada  
+- [X] Cartas TCG  
+- [X] Filtros y búsqueda avanzada  
 
 ### Fase 3
 - [ ] Team Builder  
