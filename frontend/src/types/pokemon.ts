@@ -16,6 +16,12 @@ export interface PokemonEvolution {
   image: string;
 }
 
+export interface PokemonMove {
+  name: string;
+  learnMethod: string;
+  levelLearnedAt: number | null;
+}
+
 export interface PokemonDetail {
   id: number;
   name: string;
@@ -23,7 +29,7 @@ export interface PokemonDetail {
   weight: number;
   types: PokemonType[];
   abilities: string[];
-  moves: string[];
+  moves: PokemonMove[];
   evolutions: PokemonEvolution[];
   image: string;
 }

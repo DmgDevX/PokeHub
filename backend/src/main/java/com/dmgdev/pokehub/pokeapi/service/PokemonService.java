@@ -8,9 +8,11 @@ import com.dmgdev.pokehub.pokeapi.client.PokeApiClient;
 import com.dmgdev.pokehub.pokeapi.dto.PokemonDetailResponse;
 import com.dmgdev.pokehub.pokeapi.dto.PokemonEvolutionResponse;
 import com.dmgdev.pokehub.pokeapi.dto.PokemonListItemResponse;
+import com.dmgdev.pokehub.pokeapi.dto.PokemonMoveResponse;
 import com.dmgdev.pokehub.pokeapi.dto.PokemonTypeResponse;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -56,6 +58,7 @@ public class PokemonService {
                     String key = (String) type.get("name");
                     String url = (String) type.get("url");
                     String translated = getSpanishNameFromResource(url);
+
                     return new PokemonTypeResponse(
                             key,
                             capitalize(translated != null ? translated : key)
@@ -69,18 +72,21 @@ public class PokemonService {
                     String fallbackName = (String) ability.get("name");
                     String url = (String) ability.get("url");
                     String translated = getSpanishNameFromResource(url);
+
                     return capitalize(translated != null ? translated : fallbackName);
                 })
                 .toList();
 
-        List<String> moves = ((List<Map<String, Object>>) response.get("moves")).stream()
-                .map(moveEntry -> (Map<String, Object>) moveEntry.get("move"))
-                .map(move -> {
-                    String fallbackName = (String) move.get("name");
-                    String url = (String) move.get("url");
-                    String translated = getSpanishNameFromResource(url);
-                    return capitalize(translated != null ? translated : fallbackName);
-                })
+        List<PokemonMoveResponse> moves = ((List<Map<String, Object>>) response.get("moves")).stream()
+                .map(this::mapPokemonMove)
+                .sorted(
+                        Comparator
+                                .comparing(
+                                        PokemonMoveResponse::levelLearnedAt,
+                                        Comparator.nullsLast(Integer::compareTo)
+                                )
+                                .thenComparing(PokemonMoveResponse::name)
+                )
                 .toList();
 
         List<PokemonEvolutionResponse> evolutions = getEvolutionLine(name);
@@ -98,12 +104,48 @@ public class PokemonService {
         );
     }
 
-    public List<String> getPokemonMoves(String name) {
+    public List<PokemonMoveResponse> getPokemonMoves(String name) {
         return getPokemonByName(name).moves();
     }
 
     public List<String> getPokemonAbilities(String name) {
         return getPokemonByName(name).abilities();
+    }
+
+    private PokemonMoveResponse mapPokemonMove(Map<String, Object> moveEntry) {
+        Map<String, Object> move = (Map<String, Object>) moveEntry.get("move");
+
+        String fallbackName = (String) move.get("name");
+        String moveUrl = (String) move.get("url");
+        String translatedName = getSpanishNameFromResource(moveUrl);
+
+        List<Map<String, Object>> details =
+                (List<Map<String, Object>>) moveEntry.get("version_group_details");
+
+        if (details == null || details.isEmpty()) {
+            return new PokemonMoveResponse(
+                    capitalize(translatedName != null ? translatedName : fallbackName),
+                    "unknown",
+                    null
+            );
+        }
+
+        Map<String, Object> detail = details.get(details.size() - 1);
+
+        Map<String, Object> learnMethod =
+                (Map<String, Object>) detail.get("move_learn_method");
+
+        String method = learnMethod != null
+                ? (String) learnMethod.get("name")
+                : "unknown";
+
+        Integer level = (Integer) detail.get("level_learned_at");
+
+        return new PokemonMoveResponse(
+                capitalize(translatedName != null ? translatedName : fallbackName),
+                method,
+                level
+        );
     }
 
     private List<PokemonEvolutionResponse> getEvolutionLine(String name) {
@@ -123,12 +165,16 @@ public class PokemonService {
         return evolutions;
     }
 
-    private void collectEvolutionChain(Map<String, Object> chainNode, List<PokemonEvolutionResponse> evolutions) {
+    private void collectEvolutionChain(
+            Map<String, Object> chainNode,
+            List<PokemonEvolutionResponse> evolutions
+    ) {
         if (chainNode == null) {
             return;
         }
 
         Map<String, Object> species = (Map<String, Object>) chainNode.get("species");
+
         if (species != null) {
             String speciesName = (String) species.get("name");
             String speciesUrl = (String) species.get("url");
@@ -141,7 +187,9 @@ public class PokemonService {
             ));
         }
 
-        List<Map<String, Object>> evolvesTo = (List<Map<String, Object>>) chainNode.get("evolves_to");
+        List<Map<String, Object>> evolvesTo =
+                (List<Map<String, Object>>) chainNode.get("evolves_to");
+
         if (evolvesTo != null) {
             for (Map<String, Object> nextEvolution : evolvesTo) {
                 collectEvolutionChain(nextEvolution, evolutions);
@@ -165,14 +213,19 @@ public class PokemonService {
     }
 
     private Integer extractPokemonId(String url) {
-        String cleanUrl = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+        String cleanUrl = url.endsWith("/")
+                ? url.substring(0, url.length() - 1)
+                : url;
+
         return Integer.parseInt(cleanUrl.substring(cleanUrl.lastIndexOf("/") + 1));
     }
 
     private String getOfficialArtworkUrl(Integer id) {
-        return "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/" + id + ".png";
+        return "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/"
+                + id
+                + ".png";
     }
-    
+
     @Cacheable(value = "pokemonTranslations", key = "#url")
     public String getSpanishNameFromResource(String url) {
         try {
@@ -185,7 +238,9 @@ public class PokemonService {
 
             return names.stream()
                     .filter(nameEntry -> {
-                        Map<String, Object> language = (Map<String, Object>) nameEntry.get("language");
+                        Map<String, Object> language =
+                                (Map<String, Object>) nameEntry.get("language");
+
                         return "es".equals(language.get("name"));
                     })
                     .map(nameEntry -> (String) nameEntry.get("name"))
@@ -201,6 +256,7 @@ public class PokemonService {
         if (text == null || text.isBlank()) {
             return text;
         }
+
         return text.substring(0, 1).toUpperCase() + text.substring(1);
     }
 }

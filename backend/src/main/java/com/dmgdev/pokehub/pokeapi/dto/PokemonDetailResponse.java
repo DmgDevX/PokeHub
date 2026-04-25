@@ -9,7 +9,7 @@ public record PokemonDetailResponse(
         Integer weight,
         List<PokemonTypeResponse> types,
         List<String> abilities,
-        List<String> moves,
+        List<PokemonMoveResponse> moves,
         List<PokemonEvolutionResponse> evolutions,
         String image
 ) {}

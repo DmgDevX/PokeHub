@@ -47,6 +47,49 @@ const typeColors: Record<string, { bg: string; color: string }> = {
   steel: { bg: "#b8b8d0", color: "#1f2937" },
 };
 
+const thStyle = {
+  textAlign: "left",
+  padding: "14px 16px",
+  fontWeight: 900,
+  fontSize: "0.9rem",
+  color: "#334155",
+  borderBottom: "2px solid #e2e8f0",
+};
+
+const tdStyle = {
+  padding: "14px 16px",
+  fontSize: "0.95rem",
+  color: "#1f2937",
+  borderBottom: "1px solid #e5e7eb",
+};
+
+const formatMethod = (method: string) => {
+  switch (method) {
+    case "level-up":
+      return "Subida de nivel";
+    case "machine":
+      return "MT / MO";
+    case "egg":
+      return "Huevo";
+    case "tutor":
+      return "Tutor";
+    case "stadium-surfing-pikachu":
+      return "Evento";
+    case "light-ball-egg":
+      return "Huevo especial";
+    case "colosseum-purification":
+      return "Purificación";
+    case "xd-shadow":
+      return "Movimiento oscuro";
+    case "xd-purification":
+      return "Purificación";
+    case "form-change":
+      return "Cambio de forma";
+    default:
+      return method;
+  }
+};
+
 function DetailSection({
   title,
   icon,
@@ -67,14 +110,7 @@ function DetailSection({
         height: "100%",
       }}
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 1.2,
-          mb: 2,
-        }}
-      >
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.2, mb: 2 }}>
         {icon}
         <Typography variant="h6" sx={{ fontWeight: 800 }}>
           {title}
@@ -234,14 +270,7 @@ export default function PokemonDetailPage() {
                         {pokemon.name}
                       </Typography>
 
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 1,
-                          mb: 3,
-                        }}
-                      >
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 3 }}>
                         {pokemon.types.map((type) => {
                           const typeStyle = typeColors[type.key] || {
                             bg: "#e5e7eb",
@@ -299,45 +328,7 @@ export default function PokemonDetailPage() {
                             {pokemon.abilities.length}
                           </Typography>
                         </Box>
-                        <Box sx={{ mb: 3 }}>
-                          <DetailSection
-                            title="Cartas TCG relacionadas"
-                            icon={<StyleIcon sx={{ color: "#3b4cca" }} />}
-                          >
-                            <Box
-                              sx={{
-                                display: "flex",
-                                flexDirection: { xs: "column", sm: "row" },
-                                justifyContent: "space-between",
-                                alignItems: { xs: "flex-start", sm: "center" },
-                                gap: 2,
-                              }}
-                            >
-                              <Box>
-                                <Typography sx={{ fontWeight: 700, color: "#1f2937" }}>
-                                  Explora cartas de {pokemon.name}
-                                </Typography>
 
-                                <Typography variant="body2" color="text.secondary">
-                                  Accede al catálogo TCG filtrado por este Pokémon.
-                                </Typography>
-                              </Box>
-
-                              <Button
-                                variant="contained"
-                                startIcon={<StyleIcon />}
-                                onClick={() => navigate(`/tcg/cards?pokemon=${pokemon.name.toLowerCase()}`)}
-                                sx={{
-                                  fontWeight: 800,
-                                  background: "linear-gradient(90deg, #3b4cca 0%, #5c6bc0 100%)",
-                                  boxShadow: "0 10px 24px rgba(59,76,202,0.28)",
-                                }}
-                              >
-                                Ver cartas
-                              </Button>
-                            </Box>
-                          </DetailSection>
-                        </Box>
                         <Box>
                           <Typography variant="body2" sx={{ opacity: 0.8 }}>
                             Movimientos
@@ -349,13 +340,7 @@ export default function PokemonDetailPage() {
                       </Box>
                     </Box>
 
-                    <Box
-                      sx={{
-                        width: "100%",
-                        display: "flex",
-                        justifyContent: "center",
-                      }}
-                    >
+                    <Box sx={{ width: "100%", display: "flex", justifyContent: "center" }}>
                       <Box
                         component="img"
                         src={pokemon.image}
@@ -373,6 +358,50 @@ export default function PokemonDetailPage() {
                 </Box>
 
                 <Box sx={{ p: { xs: 2.5, md: 4, xl: 5 } }}>
+                  <Box sx={{ mb: 3 }}>
+                    <DetailSection
+                      title="Cartas TCG relacionadas"
+                      icon={<StyleIcon sx={{ color: "#3b4cca" }} />}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: { xs: "column", sm: "row" },
+                          justifyContent: "space-between",
+                          alignItems: { xs: "flex-start", sm: "center" },
+                          gap: 2,
+                        }}
+                      >
+                        <Box>
+                          <Typography sx={{ fontWeight: 700, color: "#1f2937" }}>
+                            Explora cartas de {pokemon.name}
+                          </Typography>
+
+                          <Typography variant="body2" color="text.secondary">
+                            Accede al catálogo TCG filtrado por este Pokémon.
+                          </Typography>
+                        </Box>
+
+                        <Button
+                          variant="contained"
+                          startIcon={<StyleIcon />}
+                          onClick={() =>
+                            navigate(`/tcg/cards?pokemon=${pokemon.name.toLowerCase()}`)
+                          }
+                          sx={{
+                            fontWeight: 800,
+                            borderRadius: "999px",
+                            background:
+                              "linear-gradient(90deg, #3b4cca 0%, #5c6bc0 100%)",
+                            boxShadow: "0 10px 24px rgba(59,76,202,0.28)",
+                          }}
+                        >
+                          Ver cartas
+                        </Button>
+                      </Box>
+                    </DetailSection>
+                  </Box>
+
                   <Box
                     sx={{
                       display: "grid",
@@ -385,13 +414,7 @@ export default function PokemonDetailPage() {
                       title="Habilidades"
                       icon={<BoltIcon sx={{ color: "#f59e0b" }} />}
                     >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 1,
-                        }}
-                      >
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                         {pokemon.abilities.map((ability) => (
                           <Chip
                             key={ability}
@@ -411,13 +434,7 @@ export default function PokemonDetailPage() {
                       title="Tipos"
                       icon={<FitnessCenterIcon sx={{ color: "#3b4cca" }} />}
                     >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 1,
-                        }}
-                      >
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                         {pokemon.types.map((type) => {
                           const typeStyle = typeColors[type.key] || {
                             bg: "#e5e7eb",
@@ -477,7 +494,8 @@ export default function PokemonDetailPage() {
                                   ? "linear-gradient(180deg, #fff8dc 0%, #ffffff 100%)"
                                   : "#ffffff",
                                 cursor: "pointer",
-                                transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                                transition:
+                                  "transform 0.2s ease, box-shadow 0.2s ease",
                                 "&:hover": {
                                   transform: "translateY(-4px)",
                                   boxShadow: "0 10px 24px rgba(0,0,0,0.08)",
@@ -516,33 +534,186 @@ export default function PokemonDetailPage() {
                       </Box>
                     </DetailSection>
                   </Box>
-
                   <DetailSection
                     title="Movimientos"
                     icon={<SportsMmaIcon sx={{ color: "#ef4444" }} />}
                   >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: 1,
-                        maxHeight: { xs: "none", xl: 420 },
-                        overflow: "auto",
-                        pr: { xl: 1 },
-                      }}
-                    >
-                      {pokemon.moves.map((move) => (
-                        <Chip
-                          key={move}
-                          label={move}
-                          sx={{
-                            borderRadius: "999px",
-                            fontWeight: 600,
-                            backgroundColor: "#eff6ff",
-                            color: "#1d4ed8",
-                          }}
-                        />
-                      ))}
+                    <Box sx={{ display: "grid", gap: 3 }}>
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 900, mb: 1.5 }}>
+                          Por nivel y huevo
+                        </Typography>
+
+                        <Box sx={{ overflowX: "auto" }}>
+                          <Box
+                            component="table"
+                            sx={{
+                              width: "100%",
+                              borderCollapse: "separate",
+                              borderSpacing: 0,
+                              minWidth: 520,
+                              borderRadius: 3,
+                              overflow: "hidden",
+                            }}
+                          >
+                            <Box component="thead">
+                              <Box component="tr" sx={{ backgroundColor: "#f1f5f9" }}>
+                                <Box component="th" sx={{ ...thStyle, width: 120 }}>
+                                  Nivel
+                                </Box>
+                                <Box component="th" sx={thStyle}>
+                                  Movimiento
+                                </Box>
+                                <Box component="th" sx={{ ...thStyle, width: 220 }}>
+                                  Método de aprendizaje
+                                </Box>
+                              </Box>
+                            </Box>
+
+                            <Box component="tbody">
+                              {pokemon.moves
+                                .filter(
+                                  (move) =>
+                                    move.learnMethod === "level-up" ||
+                                    move.learnMethod === "egg"
+                                )
+                                .map((move, index) => (
+                                  <Box
+                                    component="tr"
+                                    key={`${move.name}-${move.learnMethod}-${index}`}
+                                    sx={{
+                                      backgroundColor: index % 2 === 0 ? "#ffffff" : "#f8fafc",
+                                      "&:hover": {
+                                        backgroundColor: "#eef2ff",
+                                      },
+                                    }}
+                                  >
+                                    <Box component="td" sx={tdStyle}>
+                                      <Chip
+                                        label={
+                                          move.learnMethod === "egg"
+                                            ? "-"
+                                            : move.levelLearnedAt ?? "-"
+                                        }
+                                        size="small"
+                                        sx={{
+                                          minWidth: 48,
+                                          fontWeight: 900,
+                                          backgroundColor:
+                                            move.learnMethod === "level-up"
+                                              ? "#dcfce7"
+                                              : "#fef3c7",
+                                          color:
+                                            move.learnMethod === "level-up"
+                                              ? "#166534"
+                                              : "#92400e",
+                                        }}
+                                      />
+                                    </Box>
+
+                                    <Box component="td" sx={{ ...tdStyle, fontWeight: 800 }}>
+                                      {move.name}
+                                    </Box>
+
+                                    <Box component="td" sx={tdStyle}>
+                                      <Chip
+                                        label={formatMethod(move.learnMethod)}
+                                        size="small"
+                                        sx={{
+                                          fontWeight: 800,
+                                          borderRadius: "999px",
+                                          backgroundColor:
+                                            move.learnMethod === "level-up"
+                                              ? "#dcfce7"
+                                              : "#fef3c7",
+                                          color:
+                                            move.learnMethod === "level-up"
+                                              ? "#166534"
+                                              : "#92400e",
+                                        }}
+                                      />
+                                    </Box>
+                                  </Box>
+                                ))}
+                            </Box>
+                          </Box>
+                        </Box>
+                      </Box>
+
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 900, mb: 1.5 }}>
+                          Por MT/MO y Tutor
+                        </Typography>
+
+                        <Box sx={{ overflowX: "auto" }}>
+                          <Box
+                            component="table"
+                            sx={{
+                              width: "100%",
+                              borderCollapse: "separate",
+                              borderSpacing: 0,
+                              minWidth: 420,
+                              borderRadius: 3,
+                              overflow: "hidden",
+                            }}
+                          >
+                            <Box component="thead">
+                              <Box component="tr" sx={{ backgroundColor: "#f1f5f9" }}>
+                                <Box component="th" sx={thStyle}>
+                                  Movimiento
+                                </Box>
+                                <Box component="th" sx={{ ...thStyle, width: 220 }}>
+                                  Método de aprendizaje
+                                </Box>
+                              </Box>
+                            </Box>
+
+                            <Box component="tbody">
+                              {pokemon.moves
+                                .filter(
+                                  (move) =>
+                                    move.learnMethod === "machine" ||
+                                    move.learnMethod === "tutor"
+                                )
+                                .map((move, index) => (
+                                  <Box
+                                    component="tr"
+                                    key={`${move.name}-${move.learnMethod}-${index}`}
+                                    sx={{
+                                      backgroundColor: index % 2 === 0 ? "#ffffff" : "#f8fafc",
+                                      "&:hover": {
+                                        backgroundColor: "#eef2ff",
+                                      },
+                                    }}
+                                  >
+                                    <Box component="td" sx={{ ...tdStyle, fontWeight: 800 }}>
+                                      {move.name}
+                                    </Box>
+
+                                    <Box component="td" sx={tdStyle}>
+                                      <Chip
+                                        label={formatMethod(move.learnMethod)}
+                                        size="small"
+                                        sx={{
+                                          fontWeight: 800,
+                                          borderRadius: "999px",
+                                          backgroundColor:
+                                            move.learnMethod === "machine"
+                                              ? "#dbeafe"
+                                              : "#ede9fe",
+                                          color:
+                                            move.learnMethod === "machine"
+                                              ? "#1e40af"
+                                              : "#5b21b6",
+                                        }}
+                                      />
+                                    </Box>
+                                  </Box>
+                                ))}
+                            </Box>
+                          </Box>
+                        </Box>
+                      </Box>
                     </Box>
                   </DetailSection>
                 </Box>
