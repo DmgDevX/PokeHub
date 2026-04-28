@@ -4,6 +4,7 @@ import PokemonDetailPage from "../pages/PokemonDetailPage";
 import PokemonListPage from "../pages/PokemonListPage";
 import TcgCardsPage from "../pages/TcgCardsPage";
 import TcgCardDetailPage from "../pages/TcgCardDetailPage";
+import TeamBuilderPage from "../pages/TeamBuilderPage";
 
 export default function AppRouter() {
   return (
@@ -14,6 +15,7 @@ export default function AppRouter() {
           <Route path="/pokemon/:name" element={<PokemonDetailPage />} />
           <Route path="/tcg/cards" element={<TcgCardsPage />} />
           <Route path="/tcg/cards/:id" element={<TcgCardDetailPage />} />
+          <Route path="/team-builder" element={<TeamBuilderPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

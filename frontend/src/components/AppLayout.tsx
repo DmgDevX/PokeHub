@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import CatchingPokemonIcon from "@mui/icons-material/CatchingPokemon";
 import StyleIcon from "@mui/icons-material/Style";
+import GroupsIcon from "@mui/icons-material/Groups";
 import { NavLink, Outlet } from "react-router-dom";
 
 const navButtonStyles = {
@@ -15,6 +16,7 @@ const navButtonStyles = {
   fontWeight: 800,
   borderRadius: "999px",
   px: 2,
+  whiteSpace: "nowrap",
   "&.active": {
     backgroundColor: "#ffcb05",
     color: "#1f2937",
@@ -41,6 +43,8 @@ export default function AppLayout() {
               display: "flex",
               justifyContent: "space-between",
               gap: 2,
+              flexWrap: "wrap",
+              py: 1,
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
@@ -56,7 +60,15 @@ export default function AppLayout() {
               </Typography>
             </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                flexWrap: "wrap",
+                justifyContent: "flex-end",
+              }}
+            >
               <Button
                 component={NavLink}
                 to="/"
@@ -74,6 +86,15 @@ export default function AppLayout() {
                 sx={navButtonStyles}
               >
                 Cartas TCG
+              </Button>
+
+              <Button
+                component={NavLink}
+                to="/team-builder"
+                startIcon={<GroupsIcon />}
+                sx={navButtonStyles}
+              >
+                Team Builder
               </Button>
             </Box>
           </Toolbar>
