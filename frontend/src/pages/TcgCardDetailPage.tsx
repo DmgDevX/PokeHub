@@ -70,10 +70,25 @@ export default function TcgCardDetailPage() {
         }}
       >
         <Box sx={{ maxWidth: "1200px", mx: "auto" }}>
+          {/* 🔥 BOTÓN CORREGIDO */}
           <Button
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate("/tcg/cards")}
-            sx={{ mb: 3, color: "#3b4cca", fontWeight: 800 }}
+            sx={{
+              mb: 3,
+              fontWeight: 800,
+              borderRadius: "999px",
+              px: 2.5,
+              py: 1,
+              color: "#3b4cca",
+              backgroundColor: "#ffffff",
+              border: "1px solid rgba(0,0,0,0.08)",
+              boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+              "&:hover": {
+                backgroundColor: "#eef2ff",
+                boxShadow: "0 10px 24px rgba(0,0,0,0.12)",
+              },
+            }}
           >
             Volver a cartas TCG
           </Button>

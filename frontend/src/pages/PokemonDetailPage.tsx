@@ -230,11 +230,24 @@ export default function PokemonDetailPage() {
             <Button
               startIcon={<ArrowBackIcon />}
               onClick={() => navigate("/")}
-              sx={{ alignSelf: "flex-start" }}
+              sx={{
+                alignSelf: "flex-start",
+                fontWeight: 800,
+                borderRadius: "999px",
+                px: 2.5,
+                py: 1,
+                color: "#3b4cca",
+                backgroundColor: "#ffffff",
+                border: "1px solid rgba(0,0,0,0.08)",
+                boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+                "&:hover": {
+                  backgroundColor: "#eef2ff",
+                  boxShadow: "0 10px 24px rgba(0,0,0,0.12)",
+                },
+              }}
             >
               Volver
             </Button>
-
             <Alert severity="error">{error || "Pokémon no encontrado."}</Alert>
           </Box>
         </Box>
@@ -255,10 +268,19 @@ export default function PokemonDetailPage() {
                 onClick={() => navigate("/")}
                 sx={{
                   alignSelf: "flex-start",
-                  fontWeight: 700,
+                  mb: 0,
+                  fontWeight: 800,
                   borderRadius: "999px",
-                  px: 2,
+                  px: 2.5,
+                  py: 1,
                   color: "#3b4cca",
+                  backgroundColor: "#ffffff",
+                  border: "1px solid rgba(0,0,0,0.08)",
+                  boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+                  "&:hover": {
+                    backgroundColor: "#eef2ff",
+                    boxShadow: "0 10px 24px rgba(0,0,0,0.12)",
+                  },
                 }}
               >
                 Volver a la Pokédex
