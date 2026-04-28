@@ -9,6 +9,7 @@ import {
 import CatchingPokemonIcon from "@mui/icons-material/CatchingPokemon";
 import StyleIcon from "@mui/icons-material/Style";
 import GroupsIcon from "@mui/icons-material/Groups";
+import ViewListIcon from "@mui/icons-material/ViewList";
 import { NavLink, Outlet } from "react-router-dom";
 
 const navButtonStyles = {
@@ -95,6 +96,15 @@ export default function AppLayout() {
                 sx={navButtonStyles}
               >
                 Team Builder
+              </Button>
+
+              <Button
+                component={NavLink}
+                to="/deck-builder"
+                startIcon={<ViewListIcon />}
+                sx={navButtonStyles}
+              >
+                Deck Builder
               </Button>
             </Box>
           </Toolbar>
