@@ -121,8 +121,8 @@ Aplicación SPA moderna:
 - [X] Filtros y búsqueda avanzada  
 
 ### Fase 3
-- [ ] Team Builder  
-- [ ] Deck Builder  
+- [X] Team Builder  
+- [X] Deck Builder  
 
 ### Fase 4
 - [ ] Simulación por clima  
