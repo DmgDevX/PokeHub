@@ -6,6 +6,7 @@ import TcgCardsPage from "../pages/TcgCardsPage";
 import TcgCardDetailPage from "../pages/TcgCardDetailPage";
 import TeamBuilderPage from "../pages/TeamBuilderPage";
 import DeckBuilderPage from "../pages/DeckBuilderPage";
+import SpawnMapPage from "../pages/SpawnMapPage";
 
 export default function AppRouter() {
   return (
@@ -18,6 +19,7 @@ export default function AppRouter() {
           <Route path="/tcg/cards/:id" element={<TcgCardDetailPage />} />
           <Route path="/team-builder" element={<TeamBuilderPage />} />
           <Route path="/deck-builder" element={<DeckBuilderPage />} />
+          <Route path="/spawn-map" element={<SpawnMapPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

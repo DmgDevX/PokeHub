@@ -10,6 +10,7 @@ import CatchingPokemonIcon from "@mui/icons-material/CatchingPokemon";
 import StyleIcon from "@mui/icons-material/Style";
 import GroupsIcon from "@mui/icons-material/Groups";
 import ViewListIcon from "@mui/icons-material/ViewList";
+import PublicIcon from "@mui/icons-material/Public";
 import { NavLink, Outlet } from "react-router-dom";
 
 const navButtonStyles = {
@@ -105,6 +106,15 @@ export default function AppLayout() {
                 sx={navButtonStyles}
               >
                 Deck Builder
+              </Button>
+
+              <Button
+                component={NavLink}
+                to="/spawn-map"
+                startIcon={<PublicIcon />}
+                sx={navButtonStyles}
+              >
+                Mapa Spawn
               </Button>
             </Box>
           </Toolbar>

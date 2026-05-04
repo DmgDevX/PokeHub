@@ -1,6 +1,7 @@
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import AppRouter from "./router/AppRouter";
 import theme from "./theme";
+import "leaflet/dist/leaflet.css";
 
 function App() {
   return (
