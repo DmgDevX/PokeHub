@@ -125,7 +125,7 @@ Aplicación SPA moderna:
 - [X] Deck Builder  
 
 ### Fase 4
-- [ ] Simulación por clima  
+- [X] Simulación por clima  
 
 ### Fase 5
 - [ ] Integración con IA  
