@@ -20,8 +20,12 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import PsychologyIcon from "@mui/icons-material/Psychology";
 import StyleIcon from "@mui/icons-material/Style";
 import { getTcgCards } from "../api/tcgApi";
+import { analyzeDeck, recommendCards } from "../api/aiApi";
+import AiAnalysisPanel from "../components/ai/AiAnalysisPanel";
+import type { AiAnalysisResponse, DeckAnalysisRequest } from "../types/ai";
 import TcgCard from "../components/TcgCard";
 import type { TcgCard as TcgCardType } from "../types/tcg";
 
@@ -68,6 +72,9 @@ export default function DeckBuilderPage() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [addingCardId, setAddingCardId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [aiAnalysis, setAiAnalysis] = useState<AiAnalysisResponse | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
 
   const totalCards = useMemo(() => {
     return deck.cards.reduce((total, deckCard) => total + deckCard.quantity, 0);
@@ -117,7 +124,7 @@ export default function DeckBuilderPage() {
 
     setDeck((currentDeck) => {
       const existingCard = currentDeck.cards.find(
-        (deckCard) => deckCard.card.id === card.id
+        (deckCard) => deckCard.card.id === card.id,
       );
 
       if (existingCard) {
@@ -134,7 +141,7 @@ export default function DeckBuilderPage() {
                   ...deckCard,
                   quantity: deckCard.quantity + 1,
                 }
-              : deckCard
+              : deckCard,
           ),
         };
       }
@@ -157,7 +164,7 @@ export default function DeckBuilderPage() {
   const handleQuantityChange = (cardId: string, delta: number) => {
     setDeck((currentDeck) => {
       const currentCard = currentDeck.cards.find(
-        (deckCard) => deckCard.card.id === cardId
+        (deckCard) => deckCard.card.id === cardId,
       );
 
       if (!currentCard) {
@@ -188,7 +195,7 @@ export default function DeckBuilderPage() {
                   ...deckCard,
                   quantity: nextQuantity,
                 }
-              : deckCard
+              : deckCard,
           )
           .filter((deckCard) => deckCard.quantity > 0),
       };
@@ -198,14 +205,68 @@ export default function DeckBuilderPage() {
   const handleRemoveCard = (cardId: string) => {
     setDeck((currentDeck) => ({
       ...currentDeck,
-      cards: currentDeck.cards.filter((deckCard) => deckCard.card.id !== cardId),
+      cards: currentDeck.cards.filter(
+        (deckCard) => deckCard.card.id !== cardId,
+      ),
     }));
+  };
+
+  const buildDeckAnalysisRequest = (): DeckAnalysisRequest => ({
+    deckName: deck.name || "Mazo Pokémon TCG",
+    cards: deck.cards.map(({ card, quantity }) => ({
+      cardId: card.id,
+      name: card.name,
+      category: card.category,
+      type: null,
+      rarity: card.rarity,
+      quantity,
+    })),
+  });
+
+  const handleAnalyzeDeckWithAi = async () => {
+    if (deck.cards.length === 0) {
+      setAiError("Añade cartas al mazo para poder analizarlo.");
+      setAiAnalysis(null);
+      return;
+    }
+
+    try {
+      setAiLoading(true);
+      setAiError("");
+      const response = await analyzeDeck(buildDeckAnalysisRequest());
+      setAiAnalysis(response);
+    } catch {
+      setAiError("No se pudo generar el análisis del deck con IA.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleRecommendCardsWithAi = async () => {
+    if (deck.cards.length === 0) {
+      setAiError("Añade cartas al mazo para poder recibir recomendaciones.");
+      setAiAnalysis(null);
+      return;
+    }
+
+    try {
+      setAiLoading(true);
+      setAiError("");
+      const response = await recommendCards(buildDeckAnalysisRequest());
+      setAiAnalysis(response);
+    } catch {
+      setAiError("No se pudieron generar recomendaciones de cartas con IA.");
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleClearDeck = () => {
     setDeck(getEmptyDeck());
     setResults([]);
     setError("");
+    setAiAnalysis(null);
+    setAiError("");
 
     if (searchInputRef.current) {
       searchInputRef.current.value = "";
@@ -215,7 +276,16 @@ export default function DeckBuilderPage() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Container
+      maxWidth={false}
+      sx={{
+        width: "100%",
+        maxWidth: "2400px",
+        mx: "auto",
+        py: { xs: 2.5, md: 4 },
+        px: { xs: 2, sm: 2.5, md: 3, lg: 4, xl: 5 },
+      }}
+    >
       <Stack spacing={3}>
         <Paper
           elevation={0}
@@ -228,11 +298,7 @@ export default function DeckBuilderPage() {
           }}
         >
           <Stack spacing={1.5}>
-            <Stack
-              direction="row"
-              spacing={1.5}
-              sx={{ alignItems: "center" }}
-            >
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
               <StyleIcon sx={{ color: "#3b4cca", fontSize: 38 }} />
 
               <Box>
@@ -266,8 +332,15 @@ export default function DeckBuilderPage() {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", lg: "420px 1fr" },
-            gap: 3,
+            gridTemplateColumns: {
+              xs: "1fr",
+              lg: "330px minmax(0, 1fr) 440px",
+              xl: "370px minmax(0, 1fr) 540px",
+            },
+            "@media (min-width: 1700px)": {
+              gridTemplateColumns: "390px minmax(0, 1fr) 620px",
+            },
+            gap: { xs: 2.5, lg: 3, xl: 4 },
             alignItems: "start",
           }}
         >
@@ -357,7 +430,7 @@ export default function DeckBuilderPage() {
               {results.map((card) => {
                 const isAddingThisCard = addingCardId === card.id;
                 const deckCard = deck.cards.find(
-                  (item) => item.card.id === card.id
+                  (item) => item.card.id === card.id,
                 );
 
                 return (
@@ -438,7 +511,11 @@ export default function DeckBuilderPage() {
                             {deckCard && (
                               <Typography
                                 variant="body2"
-                                sx={{ color: "#3b4cca", fontWeight: 800, mt: 1 }}
+                                sx={{
+                                  color: "#3b4cca",
+                                  fontWeight: 800,
+                                  mt: 1,
+                                }}
                               >
                                 En mazo: x{deckCard.quantity}
                               </Typography>
@@ -500,16 +577,49 @@ export default function DeckBuilderPage() {
                   </Typography>
                 </Box>
 
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<RestartAltIcon />}
-                  onClick={handleClearDeck}
-                  disabled={deck.cards.length === 0}
-                  sx={{ borderRadius: 999, fontWeight: 800 }}
-                >
-                  Reiniciar mazo
-                </Button>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                  <Button
+                    variant="contained"
+                    startIcon={
+                      aiLoading ? (
+                        <CircularProgress size={18} color="inherit" />
+                      ) : (
+                        <PsychologyIcon />
+                      )
+                    }
+                    onClick={handleAnalyzeDeckWithAi}
+                    disabled={aiLoading || deck.cards.length === 0}
+                    sx={{
+                      borderRadius: 999,
+                      fontWeight: 800,
+                      backgroundColor: "#3b4cca",
+                      "&:hover": { backgroundColor: "#26348f" },
+                    }}
+                  >
+                    Analizar con IA
+                  </Button>
+
+                  <Button
+                    variant="outlined"
+                    startIcon={<PsychologyIcon />}
+                    onClick={handleRecommendCardsWithAi}
+                    disabled={aiLoading || deck.cards.length === 0}
+                    sx={{ borderRadius: 999, fontWeight: 800 }}
+                  >
+                    Recomendar cartas
+                  </Button>
+
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<RestartAltIcon />}
+                    onClick={handleClearDeck}
+                    disabled={deck.cards.length === 0}
+                    sx={{ borderRadius: 999, fontWeight: 800 }}
+                  >
+                    Reiniciar mazo
+                  </Button>
+                </Stack>
               </Stack>
 
               <Box sx={{ mt: 2 }}>
@@ -525,7 +635,7 @@ export default function DeckBuilderPage() {
                     sx={{
                       width: `${Math.min(
                         (totalCards / MAX_DECK_SIZE) * 100,
-                        100
+                        100,
                       )}%`,
                       height: "100%",
                       background:
@@ -624,9 +734,7 @@ export default function DeckBuilderPage() {
                             />
 
                             <IconButton
-                              disabled={
-                                quantity >= MAX_PER_CARD || deckIsFull
-                              }
+                              disabled={quantity >= MAX_PER_CARD || deckIsFull}
                               onClick={() => handleQuantityChange(card.id, 1)}
                             >
                               <AddIcon />
@@ -647,6 +755,52 @@ export default function DeckBuilderPage() {
               </Box>
             )}
           </Stack>
+
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              borderRadius: 4,
+              border: "1px solid #e2e8f0",
+              position: { lg: "sticky" },
+              top: { lg: 96 },
+              height: { lg: "calc(100vh - 130px)" },
+              maxHeight: { lg: "900px" },
+              minWidth: 0,
+              overflowY: "auto",
+              scrollbarWidth: "thin",
+              scrollbarColor: "#cbd5e1 transparent",
+              "&::-webkit-scrollbar": { width: 8 },
+              "&::-webkit-scrollbar-track": { backgroundColor: "transparent" },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "#cbd5e1",
+                borderRadius: 999,
+              },
+              "&::-webkit-scrollbar-thumb:hover": {
+                backgroundColor: "#94a3b8",
+              },
+            }}
+          >
+            <Stack spacing={1.5} sx={{ mb: 2 }}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                <PsychologyIcon sx={{ color: "#3b4cca" }} />
+                <Typography variant="h6" sx={{ fontWeight: 900 }}>
+                  Asistente IA
+                </Typography>
+              </Stack>
+
+              <Typography variant="body2" color="text.secondary">
+                Aquí aparecerán el análisis estratégico del deck y las
+                recomendaciones de cartas.
+              </Typography>
+            </Stack>
+
+            <AiAnalysisPanel
+              analysis={aiAnalysis}
+              loading={aiLoading}
+              error={aiError}
+            />
+          </Paper>
         </Box>
       </Stack>
     </Container>

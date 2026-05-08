@@ -21,11 +21,13 @@ export default function PokemonListPage() {
 
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
     setPokemonList([]);
     setPage(0);
     setHasMore(true);
-  }, [search]);
+    setError("");
+  };
 
   useEffect(() => {
     const timeout = setTimeout(async () => {
@@ -33,7 +35,9 @@ export default function PokemonListPage() {
         const isSearching = search.trim().length > 0;
 
         if (page === 0) {
-          setLoadingMessage(isSearching ? "Buscando Pokémon..." : "Cargando Pokédex...");
+          setLoadingMessage(
+            isSearching ? "Buscando Pokémon..." : "Cargando Pokédex..."
+          );
           setLoading(true);
         } else {
           setLoadingMessage("Cargando más Pokémon...");
@@ -65,7 +69,9 @@ export default function PokemonListPage() {
   }, [search, page]);
 
   useEffect(() => {
-    if (!hasMore || loading || loadingMore || search.trim()) return;
+    if (!hasMore || loading || loadingMore || search.trim()) {
+      return;
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -77,10 +83,15 @@ export default function PokemonListPage() {
     );
 
     const node = loaderRef.current;
-    if (node) observer.observe(node);
+
+    if (node) {
+      observer.observe(node);
+    }
 
     return () => {
-      if (node) observer.unobserve(node);
+      if (node) {
+        observer.unobserve(node);
+      }
     };
   }, [hasMore, loading, loadingMore, search]);
 
@@ -122,6 +133,7 @@ export default function PokemonListPage() {
               }}
             >
               <CatchingPokemonIcon sx={{ fontSize: 34, color: "#ffcb05" }} />
+
               <Typography
                 variant="h3"
                 sx={{
@@ -151,7 +163,7 @@ export default function PokemonListPage() {
             </Typography>
 
             <Box sx={{ maxWidth: 700, width: "100%", mx: "auto", mt: 1 }}>
-              <PokemonSearchBar value={search} onChange={setSearch} />
+              <PokemonSearchBar value={search} onChange={handleSearchChange} />
             </Box>
           </Box>
         </Box>
@@ -177,9 +189,13 @@ export default function PokemonListPage() {
             }}
           >
             <Box sx={{ mb: 3 }}>
-              <Typography variant="h4" sx={{ fontWeight: 900, color: "#1f2937" }}>
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: 900, color: "#1f2937" }}
+              >
                 Listado de Pokémon
               </Typography>
+
               <Typography variant="body2" color="text.secondary">
                 {pokemonList.length} Pokémon visibles
               </Typography>
@@ -220,7 +236,9 @@ export default function PokemonListPage() {
                     }}
                   >
                     <Typography variant="body2" color="text.secondary">
-                      {loadingMore ? "Cargando más Pokémon..." : "Desliza para cargar más"}
+                      {loadingMore
+                        ? "Cargando más Pokémon..."
+                        : "Desliza para cargar más"}
                     </Typography>
                   </Box>
                 )}

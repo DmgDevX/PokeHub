@@ -10,3 +10,10 @@ pokeapi:
 
 tcgdex:
   base-url: https://api.tcgdex.net/v2/es
+
+gemini:
+  api-key: ${GEMINI_API_KEY}
+  model: gemini-2.5-flash
+  base-url: https://generativelanguage.googleapis.com/v1beta
+  enabled: true
+  max-input-length: 12000

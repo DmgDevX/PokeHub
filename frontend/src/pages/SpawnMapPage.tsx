@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
+  Button,
   Card,
   CardContent,
   Checkbox,
@@ -26,6 +27,7 @@ import TerrainIcon from "@mui/icons-material/Terrain";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import AirIcon from "@mui/icons-material/Air";
+import PsychologyIcon from "@mui/icons-material/Psychology";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import ThermostatIcon from "@mui/icons-material/Thermostat";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
@@ -33,9 +35,12 @@ import L from "leaflet";
 import { getSpanishCities } from "../api/cityApi";
 import { getWeatherByCityLocation } from "../api/weatherApi";
 import { getSpawnPredictions } from "../api/spawnApi";
+import { explainSpawns } from "../api/aiApi";
+import AiTextPanel from "../components/ai/AiTextPanel";
 import type { CityMarker } from "../types/city";
 import type { WeatherSnapshot } from "../types/weather";
 import type { SpawnPrediction } from "../types/spawn";
+import type { AiTextResponse } from "../types/ai";
 
 const generationOptions = [
   { value: 1, label: "Generación I" },
@@ -96,6 +101,11 @@ export default function SpawnMapPage() {
   const [loadingCities, setLoadingCities] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiExplanation, setAiExplanation] = useState<AiTextResponse | null>(
+    null,
+  );
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
 
   const selectedGenerationLabels = useMemo(() => {
     return generationOptions
@@ -103,6 +113,38 @@ export default function SpawnMapPage() {
       .map((generation) => generation.label)
       .join(", ");
   }, [selectedGenerations]);
+
+  const loadCityDetail = useCallback(
+    async (city: CityMarker, generations: number[]) => {
+      try {
+        setWeather(null);
+        setSpawns([]);
+        setLoadingDetail(true);
+        setError(null);
+        setAiExplanation(null);
+        setAiError("");
+
+        const [weatherData, spawnData] = await Promise.all([
+          getWeatherByCityLocation(city.name, city.latitude, city.longitude),
+          getSpawnPredictions(
+            city.name,
+            city.latitude,
+            city.longitude,
+            city.geographicZone,
+            generations,
+          ),
+        ]);
+
+        setWeather(weatherData);
+        setSpawns(spawnData);
+      } catch {
+        setError("No se pudo obtener el clima o los Pokémon posibles.");
+      } finally {
+        setLoadingDetail(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     const loadCities = async () => {
@@ -119,17 +161,8 @@ export default function SpawnMapPage() {
       }
     };
 
-    loadCities();
+    void loadCities();
   }, []);
-
-  useEffect(() => {
-    if (!selectedCity) {
-      return;
-    }
-
-    loadCityDetail(selectedCity, selectedGenerations);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedGenerations]);
 
   const handleGenerationChange = (event: SelectChangeEvent<number[]>) => {
     const value = event.target.value;
@@ -142,37 +175,49 @@ export default function SpawnMapPage() {
     }
 
     setSelectedGenerations(generations);
+
+    if (selectedCity) {
+      void loadCityDetail(selectedCity, generations);
+    }
   };
 
-  const handleCityClick = async (city: CityMarker) => {
+  const handleCityClick = (city: CityMarker) => {
     setSelectedCity(city);
-    await loadCityDetail(city, selectedGenerations);
+    void loadCityDetail(city, selectedGenerations);
   };
 
-  const loadCityDetail = async (city: CityMarker, generations: number[]) => {
+  const handleExplainSpawnsWithAi = async () => {
+    if (!selectedCity || !weather || spawns.length === 0) {
+      setAiError(
+        "Selecciona una ciudad con clima y Pokémon posibles antes de usar la IA.",
+      );
+      setAiExplanation(null);
+      return;
+    }
+
     try {
-      setWeather(null);
-      setSpawns([]);
-      setLoadingDetail(true);
-      setError(null);
+      setAiLoading(true);
+      setAiError("");
 
-      const [weatherData, spawnData] = await Promise.all([
-        getWeatherByCityLocation(city.name, city.latitude, city.longitude),
-        getSpawnPredictions(
-          city.name,
-          city.latitude,
-          city.longitude,
-          city.geographicZone,
-          generations
-        ),
-      ]);
+      const response = await explainSpawns({
+        city: selectedCity.name,
+        weather: {
+          temperature: weather.temperature,
+          humidity: weather.humidity,
+          condition: weather.condition,
+        },
+        spawns: spawns.map((spawn) => ({
+          pokemonName: spawn.pokemonName,
+          probability: spawn.probability,
+          reason: spawn.reason,
+        })),
+      });
 
-      setWeather(weatherData);
-      setSpawns(spawnData);
+      setAiExplanation(response);
     } catch {
-      setError("No se pudo obtener el clima o los Pokémon posibles.");
+      setAiError("No se pudo generar la explicación de spawns con IA.");
     } finally {
-      setLoadingDetail(false);
+      setAiLoading(false);
     }
   };
 
@@ -180,13 +225,14 @@ export default function SpawnMapPage() {
     <Container
       maxWidth={false}
       sx={{
-        maxWidth: "1800px",
-        px: { xs: 2, md: 3, xl: 4 },
+        width: "100%",
+        maxWidth: "2400px",
+        mx: "auto",
+        px: { xs: 2, sm: 2.5, md: 3, lg: 4, xl: 5 },
         py: { xs: 2, md: 3 },
       }}
     >
       <Stack spacing={3}>
-        {/* Header */}
         <Box>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <PublicIcon sx={{ color: "#ef4444", fontSize: 34 }} />
@@ -210,7 +256,6 @@ export default function SpawnMapPage() {
 
         {error && <Alert severity="error">{error}</Alert>}
 
-        {/* Filtro */}
         <Card
           sx={{
             borderRadius: 4,
@@ -264,19 +309,22 @@ export default function SpawnMapPage() {
           </CardContent>
         </Card>
 
-        {/* Layout principal: mapa | info ciudad | pokemon */}
         <Box
           sx={{
             display: "grid",
             gridTemplateColumns: {
               xs: "1fr",
-              lg: "1.35fr 0.72fr 0.88fr",
+              lg: "minmax(0, 1.1fr) minmax(300px, 0.7fr)",
+              xl: "minmax(560px, 1.35fr) minmax(290px, 0.6fr) minmax(340px, 0.75fr) minmax(480px, 0.9fr)",
             },
-            gap: 3,
+            "@media (min-width: 1800px)": {
+              gridTemplateColumns:
+                "minmax(720px, 1.45fr) minmax(320px, 0.6fr) minmax(380px, 0.75fr) minmax(560px, 0.9fr)",
+            },
+            gap: { xs: 2.5, lg: 3, xl: 4 },
             alignItems: "start",
           }}
         >
-          {/* MAPA */}
           <Card
             sx={{
               borderRadius: 4,
@@ -287,7 +335,7 @@ export default function SpawnMapPage() {
           >
             <Box
               sx={{
-                height: { xs: 420, md: 560, xl: 680 },
+                height: { xs: 420, md: 560, xl: 720 },
                 width: "100%",
               }}
             >
@@ -307,7 +355,7 @@ export default function SpawnMapPage() {
 
                 {cities.map((city) => (
                   <Marker
-                    key={`${city.name}-${city.latitude}-${city.longitude}`}
+                    key={city.country}
                     position={[city.latitude, city.longitude]}
                     icon={cityIcon}
                     eventHandlers={{
@@ -317,8 +365,6 @@ export default function SpawnMapPage() {
                     <Popup>
                       <strong>{city.name}</strong>
                       <br />
-                      {city.country}
-                      <br />
                       {getGeographicZoneLabel(city.geographicZone)}
                     </Popup>
                   </Marker>
@@ -327,17 +373,17 @@ export default function SpawnMapPage() {
             </Box>
           </Card>
 
-          {/* INFORMACIÓN DE LA CIUDAD */}
           <Card
             sx={{
               borderRadius: 4,
+              overflow: "hidden",
               boxShadow: "0 10px 24px rgba(15, 23, 42, 0.08)",
               height: "fit-content",
             }}
           >
             <CardContent>
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                <LocationOnIcon sx={{ color: "#ef4444" }} />
+                <LocationOnIcon sx={{ color: "#3b82f6" }} />
                 <Typography variant="h6" sx={{ fontWeight: 900 }}>
                   Ciudad seleccionada
                 </Typography>
@@ -345,7 +391,7 @@ export default function SpawnMapPage() {
 
               <Divider sx={{ my: 2 }} />
 
-              {!selectedCity && !loadingDetail && (
+              {!selectedCity && (
                 <Box
                   sx={{
                     borderRadius: 3,
@@ -399,7 +445,9 @@ export default function SpawnMapPage() {
                     </Stack>
 
                     <Chip
-                      label={getGeographicZoneLabel(selectedCity.geographicZone)}
+                      label={getGeographicZoneLabel(
+                        selectedCity.geographicZone,
+                      )}
                       color="success"
                       variant="outlined"
                       sx={{ width: "fit-content", fontWeight: 800 }}
@@ -410,7 +458,9 @@ export default function SpawnMapPage() {
                       color="text.secondary"
                       sx={{ mt: 1 }}
                     >
-                      {getGeographicZoneDescription(selectedCity.geographicZone)}
+                      {getGeographicZoneDescription(
+                        selectedCity.geographicZone,
+                      )}
                     </Typography>
                   </Box>
 
@@ -449,9 +499,12 @@ export default function SpawnMapPage() {
                           spacing={1}
                           sx={{ alignItems: "center" }}
                         >
-                          <ThermostatIcon sx={{ color: "#ef4444", fontSize: 20 }} />
+                          <ThermostatIcon
+                            sx={{ color: "#ef4444", fontSize: 20 }}
+                          />
                           <Typography variant="body2">
-                            Temperatura: <strong>{weather.temperature} ºC</strong>
+                            Temperatura:{" "}
+                            <strong>{weather.temperature} ºC</strong>
                           </Typography>
                         </Stack>
 
@@ -460,7 +513,9 @@ export default function SpawnMapPage() {
                           spacing={1}
                           sx={{ alignItems: "center" }}
                         >
-                          <WaterDropIcon sx={{ color: "#3b82f6", fontSize: 18 }} />
+                          <WaterDropIcon
+                            sx={{ color: "#3b82f6", fontSize: 18 }}
+                          />
                           <Typography variant="body2">
                             Humedad: <strong>{weather.humidity}%</strong>
                           </Typography>
@@ -481,7 +536,11 @@ export default function SpawnMapPage() {
                           label={weather.condition}
                           color="warning"
                           variant="outlined"
-                          sx={{ width: "fit-content", fontWeight: 800, mt: 0.5 }}
+                          sx={{
+                            width: "fit-content",
+                            fontWeight: 800,
+                            mt: 0.5,
+                          }}
                         />
                       </Stack>
                     )}
@@ -491,7 +550,6 @@ export default function SpawnMapPage() {
             </CardContent>
           </Card>
 
-          {/* POKEMON POSIBLES */}
           <Card
             sx={{
               borderRadius: 4,
@@ -503,14 +561,12 @@ export default function SpawnMapPage() {
             <CardContent>
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <CatchingPokemonIcon sx={{ color: "#ef4444" }} />
-
                 <Typography variant="h6" sx={{ fontWeight: 900 }}>
                   Pokémon posibles
-                </Typography>
+                </Typography>{" "}
               </Stack>
 
               <Divider sx={{ my: 2 }} />
-
               {loadingDetail && (
                 <Stack spacing={2} sx={{ alignItems: "center", py: 4 }}>
                   <CircularProgress size={32} />
@@ -603,7 +659,9 @@ export default function SpawnMapPage() {
 
                     return (
                       <Box
-                        key={`${safeSpawn.pokemonId ?? safeSpawn.pokemonName}-${index}`}
+                        key={`${
+                          safeSpawn.pokemonId ?? safeSpawn.pokemonName
+                        }-${index}`}
                         sx={{
                           border: "1px solid #e2e8f0",
                           borderRadius: 3,
@@ -701,6 +759,86 @@ export default function SpawnMapPage() {
                   })}
                 </Box>
               )}
+            </CardContent>
+          </Card>
+
+          <Card
+            sx={{
+              borderRadius: 4,
+              overflow: "hidden",
+              boxShadow: "0 10px 24px rgba(15, 23, 42, 0.08)",
+              position: { lg: "sticky" },
+              top: { lg: 96 },
+              height: { lg: "calc(100vh - 130px)" },
+              maxHeight: { lg: "900px" },
+            }}
+          >
+            <CardContent
+              sx={{
+                height: "100%",
+                overflowY: "auto",
+                pr: 2,
+                scrollbarWidth: "thin",
+                scrollbarColor: "#cbd5e1 transparent",
+                "&::-webkit-scrollbar": { width: 8 },
+                "&::-webkit-scrollbar-track": { backgroundColor: "transparent" },
+                "&::-webkit-scrollbar-thumb": {
+                  backgroundColor: "#cbd5e1",
+                  borderRadius: 999,
+                },
+                "&::-webkit-scrollbar-thumb:hover": {
+                  backgroundColor: "#94a3b8",
+                },
+              }}
+            >
+              <Stack spacing={1.5} sx={{ mb: 2 }}>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{ alignItems: "center" }}
+                >
+                  <PsychologyIcon sx={{ color: "#3b4cca" }} />
+                  <Typography variant="h6" sx={{ fontWeight: 900 }}>
+                    Asistente IA
+                  </Typography>
+                </Stack>
+
+                <Typography variant="body2" color="text.secondary">
+                  Aquí aparecerá la explicación inteligente de los spawns según
+                  ciudad, clima y probabilidades.
+                </Typography>
+              </Stack>
+
+              <Button
+                fullWidth
+                variant="contained"
+                startIcon={
+                  aiLoading ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
+                    <PsychologyIcon />
+                  )
+                }
+                onClick={handleExplainSpawnsWithAi}
+                disabled={
+                  aiLoading || !selectedCity || !weather || spawns.length === 0
+                }
+                sx={{
+                  borderRadius: 999,
+                  fontWeight: 800,
+                  backgroundColor: "#3b4cca",
+                  mb: 2,
+                  "&:hover": { backgroundColor: "#26348f" },
+                }}
+              >
+                Explicar con IA
+              </Button>
+
+              <AiTextPanel
+                response={aiExplanation}
+                loading={aiLoading}
+                error={aiError}
+              />
             </CardContent>
           </Card>
         </Box>

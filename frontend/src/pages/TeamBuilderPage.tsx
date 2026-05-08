@@ -21,6 +21,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CatchingPokemonIcon from "@mui/icons-material/CatchingPokemon";
 import SearchIcon from "@mui/icons-material/Search";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import PsychologyIcon from "@mui/icons-material/Psychology";
 import type {
   PokemonDetail,
   PokemonListItem,
@@ -28,6 +29,9 @@ import type {
 } from "../types/pokemon";
 import type { PokemonTeamDraft, TeamSlot } from "../types/team";
 import { getPokemonByName, getPokemonList } from "../api/pokemonApi";
+import { analyzeTeam, recommendPokemon } from "../api/aiApi";
+import AiAnalysisPanel from "../components/ai/AiAnalysisPanel";
+import type { AiAnalysisResponse, TeamAnalysisRequest } from "../types/ai";
 
 const STORAGE_KEY = "pokehub_team_builder_draft";
 const MAX_TEAM_SIZE = 6;
@@ -87,19 +91,25 @@ export default function TeamBuilderPage() {
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const [team, setTeam] = useState<PokemonTeamDraft>(() =>
-    loadTeamFromStorage()
+    loadTeamFromStorage(),
   );
   const [results, setResults] = useState<PokemonListItem[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [addingPokemonName, setAddingPokemonName] = useState<string | null>(
-    null
+    null,
   );
   const [error, setError] = useState("");
+  const [aiAnalysis, setAiAnalysis] = useState<AiAnalysisResponse | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
 
   const teamIsFull = team.slots.length >= MAX_TEAM_SIZE;
 
   const teamTypes = useMemo(() => {
-    const uniqueTypes = new Map<string, (typeof team.slots)[number]["pokemon"]["types"][number]>();
+    const uniqueTypes = new Map<
+      string,
+      (typeof team.slots)[number]["pokemon"]["types"][number]
+    >();
 
     team.slots
       .flatMap((slot) => slot.pokemon.types)
@@ -185,7 +195,7 @@ export default function TeamBuilderPage() {
               ...slot,
               selectedAbility: ability,
             }
-          : slot
+          : slot,
       ),
     }));
   };
@@ -193,7 +203,7 @@ export default function TeamBuilderPage() {
   const handleMoveSlotChange = (
     slotId: string,
     moveIndex: number,
-    moveName: string
+    moveName: string,
   ) => {
     setTeam((currentTeam) => ({
       ...currentTeam,
@@ -214,7 +224,7 @@ export default function TeamBuilderPage() {
         }
 
         const selectedMove = slot.pokemon.moves.find(
-          (move) => move.name === moveName
+          (move) => move.name === moveName,
         );
 
         if (!selectedMove) {
@@ -234,17 +244,70 @@ export default function TeamBuilderPage() {
   const isMoveAlreadySelected = (
     selectedMoves: PokemonMove[],
     moveName: string,
-    currentIndex: number
+    currentIndex: number,
   ) => {
     return selectedMoves.some(
-      (move, index) => move.name === moveName && index !== currentIndex
+      (move, index) => move.name === moveName && index !== currentIndex,
     );
+  };
+
+  const buildTeamAnalysisRequest = (): TeamAnalysisRequest => ({
+    teamName: team.name || "Equipo Pokémon",
+    pokemon: team.slots.map((slot) => ({
+      name: slot.pokemon.name,
+      types: slot.pokemon.types.map((type) => type.key),
+      ability: slot.selectedAbility,
+      moves: slot.selectedMoves.map((move) => move.name),
+      stats: null,
+    })),
+  });
+
+  const handleAnalyzeTeamWithAi = async () => {
+    if (team.slots.length === 0) {
+      setAiError("Añade al menos un Pokémon para poder analizar el equipo.");
+      setAiAnalysis(null);
+      return;
+    }
+
+    try {
+      setAiLoading(true);
+      setAiError("");
+      const response = await analyzeTeam(buildTeamAnalysisRequest());
+      setAiAnalysis(response);
+    } catch {
+      setAiError("No se pudo generar el análisis del equipo con IA.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleRecommendPokemonWithAi = async () => {
+    if (team.slots.length === 0) {
+      setAiError(
+        "Añade al menos un Pokémon para poder recibir recomendaciones.",
+      );
+      setAiAnalysis(null);
+      return;
+    }
+
+    try {
+      setAiLoading(true);
+      setAiError("");
+      const response = await recommendPokemon(buildTeamAnalysisRequest());
+      setAiAnalysis(response);
+    } catch {
+      setAiError("No se pudieron generar recomendaciones con IA.");
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleClearTeam = () => {
     setTeam(getEmptyTeam());
     setResults([]);
     setError("");
+    setAiAnalysis(null);
+    setAiError("");
 
     if (searchInputRef.current) {
       searchInputRef.current.value = "";
@@ -254,7 +317,16 @@ export default function TeamBuilderPage() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Container
+      maxWidth={false}
+      sx={{
+        width: "100%",
+        maxWidth: "2400px",
+        mx: "auto",
+        py: { xs: 2.5, md: 4 },
+        px: { xs: 2, sm: 2.5, md: 3, lg: 4, xl: 5 },
+      }}
+    >
       <Stack spacing={3}>
         <Paper
           elevation={0}
@@ -267,11 +339,7 @@ export default function TeamBuilderPage() {
           }}
         >
           <Stack spacing={1.5}>
-            <Stack
-              direction="row"
-              spacing={1.5}
-              sx={{ alignItems: "center" }}
-            >
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
               <CatchingPokemonIcon sx={{ color: "#d32f2f", fontSize: 38 }} />
 
               <Box>
@@ -305,8 +373,15 @@ export default function TeamBuilderPage() {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", lg: "420px 1fr" },
-            gap: 3,
+            gridTemplateColumns: {
+              xs: "1fr",
+              lg: "330px minmax(0, 1fr) 440px",
+              xl: "370px minmax(0, 1fr) 540px",
+            },
+            "@media (min-width: 1700px)": {
+              gridTemplateColumns: "390px minmax(0, 1fr) 620px",
+            },
+            gap: { xs: 2.5, lg: 3, xl: 4 },
             alignItems: "start",
           }}
         >
@@ -503,23 +578,53 @@ export default function TeamBuilderPage() {
                   </Typography>
                 </Box>
 
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<RestartAltIcon />}
-                  onClick={handleClearTeam}
-                  disabled={team.slots.length === 0}
-                  sx={{ borderRadius: 999, fontWeight: 800 }}
-                >
-                  Reiniciar equipo
-                </Button>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                  <Button
+                    variant="contained"
+                    startIcon={
+                      aiLoading ? (
+                        <CircularProgress size={18} color="inherit" />
+                      ) : (
+                        <PsychologyIcon />
+                      )
+                    }
+                    onClick={handleAnalyzeTeamWithAi}
+                    disabled={aiLoading || team.slots.length === 0}
+                    sx={{
+                      borderRadius: 999,
+                      fontWeight: 800,
+                      backgroundColor: "#3b4cca",
+                      "&:hover": { backgroundColor: "#26348f" },
+                    }}
+                  >
+                    Analizar con IA
+                  </Button>
+
+                  <Button
+                    variant="outlined"
+                    startIcon={<PsychologyIcon />}
+                    onClick={handleRecommendPokemonWithAi}
+                    disabled={aiLoading || team.slots.length === 0}
+                    sx={{ borderRadius: 999, fontWeight: 800 }}
+                  >
+                    Recomendar Pokémon
+                  </Button>
+
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<RestartAltIcon />}
+                    onClick={handleClearTeam}
+                    disabled={team.slots.length === 0}
+                    sx={{ borderRadius: 999, fontWeight: 800 }}
+                  >
+                    Reiniciar equipo
+                  </Button>
+                </Stack>
               </Stack>
 
               {teamTypes.length > 0 && (
-                <Stack
-                  direction="row"
-                  sx={{ flexWrap: "wrap", gap: 1, mt: 2 }}
-                >
+                <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1, mt: 2 }}>
                   {teamTypes.map((type, index) => (
                     <Chip
                       key={`${type.key}-${index}`}
@@ -756,7 +861,7 @@ export default function TeamBuilderPage() {
                                           handleMoveSlotChange(
                                             slot.id,
                                             moveIndex,
-                                            event.target.value
+                                            event.target.value,
                                           )
                                         }
                                         sx={{
@@ -778,7 +883,7 @@ export default function TeamBuilderPage() {
                                             disabled={isMoveAlreadySelected(
                                               slot.selectedMoves,
                                               move.name,
-                                              moveIndex
+                                              moveIndex,
                                             )}
                                           >
                                             {move.name}
@@ -788,7 +893,7 @@ export default function TeamBuilderPage() {
                                     </Stack>
                                   </Paper>
                                 );
-                              }
+                              },
                             )}
                           </Box>
                         </Box>
@@ -799,6 +904,52 @@ export default function TeamBuilderPage() {
               })}
             </Box>
           </Stack>
+
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              borderRadius: 4,
+              border: "1px solid #e2e8f0",
+              position: { lg: "sticky" },
+              top: { lg: 96 },
+              height: { lg: "calc(100vh - 130px)" },
+              maxHeight: { lg: "900px" },
+              minWidth: 0,
+              overflowY: "auto",
+              scrollbarWidth: "thin",
+              scrollbarColor: "#cbd5e1 transparent",
+              "&::-webkit-scrollbar": { width: 8 },
+              "&::-webkit-scrollbar-track": { backgroundColor: "transparent" },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "#cbd5e1",
+                borderRadius: 999,
+              },
+              "&::-webkit-scrollbar-thumb:hover": {
+                backgroundColor: "#94a3b8",
+              },
+            }}
+          >
+            <Stack spacing={1.5} sx={{ mb: 2 }}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                <PsychologyIcon sx={{ color: "#3b4cca" }} />
+                <Typography variant="h6" sx={{ fontWeight: 900 }}>
+                  Asistente IA
+                </Typography>
+              </Stack>
+
+              <Typography variant="body2" color="text.secondary">
+                Aquí aparecerán el análisis estratégico del equipo y las
+                recomendaciones de Pokémon.
+              </Typography>
+            </Stack>
+
+            <AiAnalysisPanel
+              analysis={aiAnalysis}
+              loading={aiLoading}
+              error={aiError}
+            />
+          </Paper>
         </Box>
       </Stack>
     </Container>
